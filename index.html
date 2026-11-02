@@ -1,0 +1,2773 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Citi Studio - Remove BG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+2:wght@700;800&family=Bangla+MN&family=Bangers&family=Be+Vietnam+Pro:wght@500;700;900&family=Chakra+Petch:wght@700&family=Coiny&family=Comfortaa:wght@700&family=Cormorant+Garamond:ital,wght@0,700;1,700&family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700;800&family=Josefin+Sans:wght@700&family=Kanit:wght@700;900&family=Lobster&family=Merriweather:wght@700;900&family=Montserrat:wght@700;900&family=Nunito:wght@800;900&family=Oswald:wght@700&family=Pacifico&family=Patrick+Hand&family=Paytone+One&family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@700;800&family=Prompt:wght@700;900&family=Quicksand:wght@700&family=Righteous&family=Roboto+Slab:wght@700;900&family=Saira+Stencil+One&family=Sigmar+One&family=Space+Grotesk:wght@700&family=VT323&family=Yeseva+One&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      user-select: none;
+      overflow-x: hidden;
+    }
+
+    .checkerboard {
+      background-color: #ffffff;
+      background-image: 
+        linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+        linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+        linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    .upload-card-shadow {
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .toolbar-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    ::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="h-14 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="resetToHome()">
+      <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </div>
+      <div>
+        <span class="font-bold text-lg tracking-tight text-slate-800">Citi Studio <span class="text-blue-600">- Remove BG</span></span>
+      </div>
+    </div>
+
+    <!-- Cụm phím tắt hiển thị nhanh -->
+    <div class="hidden lg:flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200/80">
+      <span><kbd class="px-1.5 py-0.5 bg-white border rounded font-semibold text-slate-700">Ctrl+Z</kbd> Undo</span>
+      <span>•</span>
+      <span><kbd class="px-1.5 py-0.5 bg-white border rounded font-semibold text-slate-700">Ctrl+Shift+Z</kbd> Redo</span>
+      <span>•</span>
+      <span><kbd class="px-1.5 py-0.5 bg-white border rounded font-semibold text-slate-700">Space</kbd> Di chuyển</span>
+      <span>•</span>
+      <span><kbd class="px-1.5 py-0.5 bg-white border rounded font-semibold text-slate-700">Y</kbd> Ảnh gốc</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div id="modelStatusBadge" class="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">
+        <span id="modelStatusDot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+        <span id="modelStatusText">Đang khởi tạo AI...</span>
+      </div>
+      <button id="headerNewUploadBtn" onclick="triggerFileInput()" class="hidden text-sm font-medium text-slate-700 hover:text-blue-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Thêm ảnh
+      </button>
+    </div>
+  </header>
+
+  <!-- INPUT FILE ẨN -->
+  <input type="file" id="fileInput" multiple accept="image/png,image/jpeg,image/webp,image/jpg" class="hidden" />
+
+  <!-- ==================== MÀN HÌNH 1: UPLOAD CARD ==================== -->
+  <main id="uploadScreen" class="flex-1 flex flex-col items-center justify-center p-6">
+    <div class="text-center mb-8 max-w-xl">
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight mb-3">
+        Citi Studio - Remove BG
+      </h1>
+      <p class="text-slate-500 text-base">
+        Tự động tách nền mượt mà, thiết kế chữ & tạo viền trắng Sticker tròn mịn không răng cưa, xuất file <code class="text-blue-600 font-semibold">.PNG / .SVG</code> chất lượng gốc.
+      </p>
+    </div>
+
+    <div id="dropZoneHome" 
+         class="w-full max-w-[460px] bg-white rounded-[32px] upload-card-shadow p-10 sm:p-14 flex flex-col items-center justify-center text-center border-2 border-transparent transition-all duration-200">
+      
+      <button onclick="triggerFileInput()" 
+              class="bg-[#0b65e6] hover:bg-[#0953be] active:scale-[0.98] text-white font-semibold text-xl px-10 py-4 rounded-full shadow-md hover:shadow-lg transition-all duration-150 mb-7 cursor-pointer">
+        Tải lên hình ảnh
+      </button>
+
+      <p class="text-slate-600 font-semibold text-lg mb-2">
+        hoặc thả một tệp,
+      </p>
+      <p class="text-slate-400 text-sm">
+        dán hình ảnh (<kbd class="px-1.5 py-0.5 text-xs bg-slate-100 border border-slate-200 rounded text-slate-600">Ctrl+V</kbd>) hoặc 
+        <button onclick="promptImageUrl()" class="underline hover:text-blue-600 cursor-pointer">URL</button>
+      </p>
+    </div>
+  </main>
+
+  <!-- ==================== MÀN HÌNH 2: WORKSPACE & KẾT QUẢ ==================== -->
+  <section id="editorScreen" class="hidden flex-1 flex flex-col items-center justify-between py-2.5 px-4 sm:px-6 relative overflow-hidden">
+    
+    <!-- THANH CÔNG CỤ NỔI PHÍA TRÊN (ĐÃ RÚT NGẮN TÊN GỌN GÀNG) -->
+    <div class="w-full flex flex-col items-center z-20 gap-2">
+      <div class="bg-white rounded-full toolbar-shadow px-3 py-1.5 flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 border border-slate-100">
+        
+        <!-- Tab 1: Phần cắt -->
+        <button id="tabCutoutBtn" onclick="setMode('cutout')" 
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer bg-blue-50 text-blue-700 border border-blue-200">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          <span>Phần cắt</span>
+        </button>
+
+        <!-- Tab 2: Thiết kế -->
+        <button id="tabTextBtn" onclick="setMode('text')" 
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition cursor-pointer text-slate-600 hover:bg-slate-50 border border-transparent">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
+          </svg>
+          <span>Thiết kế</span>
+        </button>
+
+        <!-- Tab 3: Tạo Sticker -->
+        <button id="tabStickerBtn" onclick="setMode('sticker')" 
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition cursor-pointer text-slate-600 hover:bg-slate-50 border border-transparent">
+          <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+          </svg>
+          <span>Tạo Sticker</span>
+        </button>
+
+        <!-- Tab 4: Vector -->
+        <button id="tabVectorBtn" onclick="setMode('vector')" 
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition cursor-pointer text-slate-600 hover:bg-slate-50 border border-transparent">
+          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          <span>Vector</span>
+        </button>
+
+        <!-- Tab 5: Nền -->
+        <button id="tabBgBtn" onclick="toggleBgPopover()" 
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span>Nền</span>
+        </button>
+
+        <!-- Nút Bật / Tắt Quản lý Layer -->
+        <button id="toggleLayerPanelBtn" onclick="toggleLayerPanel()" 
+                title="Bật / Tắt bảng Quản lý Layer"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer border border-transparent">
+          <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span>Layer</span>
+        </button>
+
+        <div class="h-5 w-[1px] bg-slate-200 mx-0.5 hidden sm:block"></div>
+
+        <!-- Nút Undo / Redo -->
+        <button onclick="performUndo()" title="Hoàn tác (Ctrl + Z)" class="p-1.5 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+        </button>
+        <button onclick="performRedo()" title="Làm lại (Ctrl + Shift + Z)" class="p-1.5 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+        </button>
+
+        <!-- Nút Xem Ảnh Gốc -->
+        <button id="compareBtn" 
+                onclick="toggleOriginalPreviewClick()"
+                title="Bấm hoặc nhấn phím Y để xem ảnh gốc"
+                class="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer flex items-center gap-1.5 border border-slate-200">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <span id="compareBtnText">Ảnh gốc</span>
+        </button>
+
+        <!-- Nút Tải xuống -->
+        <div class="relative" id="downloadDropdownContainer">
+          <div class="flex items-center">
+            <button onclick="downloadCurrentImage()" 
+                    class="bg-[#0b65e6] hover:bg-[#0953be] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm pl-4 pr-2.5 py-1.5 rounded-l-full transition flex items-center gap-1.5 cursor-pointer">
+              <span>Tải xuống</span>
+            </button>
+            <button onclick="toggleDownloadMenu(event)" 
+                    class="bg-[#0b65e6] hover:bg-[#0953be] text-white font-semibold text-xs sm:text-sm pl-1.5 pr-3 py-1.5 rounded-r-full border-l border-blue-500 transition cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Menu tải xuống đơn & hàng loạt -->
+          <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50">
+            <button onclick="downloadCurrentImage(); hideDownloadMenu();" 
+                    class="w-full text-left px-3.5 py-2 rounded-xl hover:bg-slate-50 transition flex items-center justify-between group cursor-pointer">
+              <div>
+                <div class="font-semibold text-sm text-slate-800 group-hover:text-blue-600">Tải ảnh hiện tại (.PNG)</div>
+                <div id="currentImgResolutionText" class="text-xs text-slate-400">Chất lượng gốc • Không nền</div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-600">.PNG</span>
+            </button>
+
+            <button onclick="exportCurrentVectorAI(); hideDownloadMenu();" 
+                    class="w-full text-left px-3.5 py-2 rounded-xl hover:bg-slate-50 transition flex items-center justify-between group cursor-pointer">
+              <div>
+                <div class="font-semibold text-sm text-slate-800 group-hover:text-rose-600">Xuất Vector hiện tại (.AI)</div>
+                <div class="text-xs text-slate-400">Đường path Vector dựa trên viền Sticker</div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-rose-50 text-rose-600">.AI</span>
+            </button>
+
+            <button onclick="exportCurrentSVG(); hideDownloadMenu();" 
+                    class="w-full text-left px-3.5 py-2 rounded-xl hover:bg-slate-50 transition flex items-center justify-between group cursor-pointer">
+              <div>
+                <div class="font-semibold text-sm text-slate-800 group-hover:text-amber-600">Xuất Vector hiện tại (.SVG)</div>
+                <div class="text-xs text-slate-400">Gồm ảnh Sticker & đường cắt Vector</div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-600">.SVG</span>
+            </button>
+
+            <div class="my-1.5 border-t border-slate-100"></div>
+            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Xuất Hàng Loạt</div>
+
+            <button onclick="downloadAllSVGsAsZip(); hideDownloadMenu();" 
+                    class="w-full text-left px-3.5 py-2 rounded-xl hover:bg-amber-50/60 transition flex items-center justify-between group cursor-pointer">
+              <div>
+                <div class="font-semibold text-sm text-slate-800 group-hover:text-amber-600">Xuất tất cả file .SVG (.ZIP)</div>
+                <div class="text-xs text-slate-400">Gom toàn bộ file .SVG vào 1 file ZIP</div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-700">Hàng loạt .SVG</span>
+            </button>
+
+            <button onclick="downloadAllIndividualSVGs(); hideDownloadMenu();" 
+                    class="w-full text-left px-3.5 py-2 rounded-xl hover:bg-amber-50/60 transition flex items-center justify-between group cursor-pointer">
+              <div>
+                <div class="font-semibold text-sm text-slate-800 group-hover:text-amber-600">Tải từng file .SVG rời về máy</div>
+                <div class="text-xs text-slate-400">Tải lần lượt từng file .SVG</div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Từng file</span>
+            </button>
+
+            <button onclick="downloadAllAsZip(); hideDownloadMenu();" 
+                    class="w-full text-left px-3.5 py-2 rounded-xl hover:bg-slate-50 transition flex items-center justify-between group cursor-pointer">
+              <div>
+                <div class="font-semibold text-sm text-slate-800 group-hover:text-blue-600">Tải tất cả ảnh .PNG (.ZIP)</div>
+                <div class="text-xs text-slate-400">Gom toàn bộ ảnh PNG chất lượng gốc vào ZIP</div>
+              </div>
+              <span id="batchCountBadgeZip" class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">Tất cả</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== SUB-BAR 1: PHẦN CẮT ==================== -->
+      <div id="cutoutControlBar" class="bg-white/95 backdrop-blur rounded-2xl toolbar-shadow px-4 py-2 border border-slate-200/80 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 max-w-4xl">
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+          <button id="brushNoneBtn" onclick="setBrushTool('none')" 
+                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-slate-600 hover:text-slate-900">
+            ✋ Di chuyển
+          </button>
+          <button id="brushEraseBtn" onclick="setBrushTool('erase')" 
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer bg-white text-slate-900 shadow-sm ring-1 ring-slate-200 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            Xóa bớt
+          </button>
+          <button id="brushRestoreBtn" onclick="setBrushTool('restore')" 
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            Khôi phục
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-500">Cỡ cọ:</span>
+          <input type="range" id="brushSizeSlider" min="5" max="150" value="40" 
+                 oninput="updateBrushSizeLabel()"
+                 class="w-24 sm:w-28 accent-blue-600 cursor-pointer" />
+          <span id="brushSizeValue" class="text-xs font-bold text-blue-600 w-9">40px</span>
+        </div>
+
+        <label class="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+          <input type="checkbox" id="showOriginalGhostCheckbox" checked onchange="scheduleViewportRender()" class="w-3.5 h-3.5 accent-amber-600 rounded cursor-pointer" />
+          <span>Hiện mờ nền gốc</span>
+        </label>
+
+        <div class="flex items-center gap-1">
+          <button onclick="resetMaskToAI()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer">
+            Đặt lại AI
+          </button>
+        </div>
+      </div>
+
+      <!-- ==================== SUB-BAR 2: THIẾT KẾ (KHO FONT PHONG PHÚ + XOAY + VIỀN CHỮ) ==================== -->
+      <div id="textControlBar" class="hidden bg-white/95 backdrop-blur rounded-2xl toolbar-shadow px-4 py-2 border border-slate-200/80 flex flex-wrap items-center justify-center gap-2.5 max-w-6xl">
+        <button onclick="addNewTextLayer()" 
+                class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-sm transition flex items-center gap-1 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
+          <span>+ Thêm chữ</span>
+        </button>
+
+        <input type="text" id="textContentInput" placeholder="Nhập chữ..." 
+               oninput="onTextControlLiveInput()" onchange="onTextControlCommit()"
+               class="px-2.5 py-1 text-xs sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:border-purple-500 w-36 sm:w-44 font-medium" />
+
+        <!-- Kho 28 Font chữ đa phong cách hỗ trợ Tiếng Việt -->
+        <select id="textFontSelect" onchange="onTextControlCommit()" 
+                class="px-2.5 py-1 text-xs font-semibold border border-slate-300 rounded-xl bg-white cursor-pointer focus:outline-none max-w-[190px]">
+          <optgroup label="🔥 Font Sticker Tròn Đậm">
+            <option value="'Baloo 2', sans-serif">Baloo 2</option>
+            <option value="'Coiny', system-ui">Coiny</option>
+            <option value="'Paytone One', sans-serif">Paytone One</option>
+            <option value="'Sigmar One', cursive">Sigmar One</option>
+            <option value="'Bangers', cursive">Bangers (Truyện tranh)</option>
+            <option value="'Righteous', cursive">Righteous</option>
+            <option value="'Nunito', sans-serif">Nunito Black</option>
+            <option value="'Quicksand', sans-serif">Quicksand Bold</option>
+            <option value="'Comfortaa', cursive">Comfortaa</option>
+          </optgroup>
+          <optgroup label="✨ Font Hiện Đại & Mạnh Mẽ">
+            <option value="'Montserrat', sans-serif">Montserrat Black</option>
+            <option value="'Be Vietnam Pro', sans-serif">Be Vietnam Pro</option>
+            <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+            <option value="'Kanit', sans-serif">Kanit Black</option>
+            <option value="'Prompt', sans-serif">Prompt Black</option>
+            <option value="'Anton', sans-serif">Anton (Cao đậm)</option>
+            <option value="'Oswald', sans-serif">Oswald Bold</option>
+            <option value="'Chakra Petch', sans-serif">Chakra Petch (Gaming)</option>
+            <option value="'Saira Stencil One', cursive">Saira Stencil</option>
+            <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+            <option value="'Josefin Sans', sans-serif">Josefin Sans</option>
+            <option value="Impact, sans-serif">Impact</option>
+          </optgroup>
+          <optgroup label="🖋 Font Viết Tay & Nghệ Thuật">
+            <option value="'Pacifico', cursive">Pacifico</option>
+            <option value="'Dancing Script', cursive">Dancing Script</option>
+            <option value="'Lobster', cursive">Lobster</option>
+            <option value="'Patrick Hand', cursive">Patrick Hand</option>
+            <option value="'VT323', monospace">VT323 (Pixel Retro)</option>
+          </optgroup>
+          <optgroup label="👑 Font Cổ Điển & Sang Trọng">
+            <option value="'Playfair Display', serif">Playfair Display</option>
+            <option value="'Yeseva One', cursive">Yeseva One</option>
+            <option value="'Merriweather', serif">Merriweather</option>
+            <option value="'Roboto Slab', serif">Roboto Slab</option>
+            <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+          </optgroup>
+        </select>
+
+        <!-- Cỡ chữ -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-medium text-slate-500">Cỡ:</span>
+          <input type="range" id="textSizeSlider" min="16" max="260" value="72" 
+                 oninput="onTextControlLiveInput()" onchange="onTextControlCommit()"
+                 class="w-20 accent-purple-600 cursor-pointer" />
+          <span id="textSizeValue" class="text-xs font-bold text-purple-600 w-8">72</span>
+        </div>
+
+        <!-- Xoay chữ -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-medium text-slate-500">Xoay:</span>
+          <input type="range" id="textRotationSlider" min="-180" max="180" value="0" 
+                 oninput="onTextControlLiveInput()" onchange="onTextControlCommit()"
+                 class="w-20 accent-purple-600 cursor-pointer" />
+          <span id="textRotationValue" class="text-xs font-bold text-purple-600 w-9">0°</span>
+          <button onclick="resetTextRotation()" title="Đặt góc xoay về 0°" class="text-[10px] px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 cursor-pointer">0°</button>
+        </div>
+
+        <!-- Màu chữ -->
+        <div class="flex items-center gap-1">
+          <span class="text-xs font-medium text-slate-500">Màu:</span>
+          <input type="color" id="textColorPicker" value="#e11d48" oninput="onTextControlLiveInput()" onchange="onTextControlCommit()" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+        </div>
+
+        <!-- Viền riêng cho chữ -->
+        <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+          <span class="text-xs font-medium text-slate-600">Viền chữ:</span>
+          <input type="color" id="textStrokeColorPicker" value="#1e293b" oninput="onTextControlLiveInput()" onchange="onTextControlCommit()" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
+          <input type="range" id="textStrokeWidthSlider" min="0" max="30" value="4" 
+                 oninput="onTextControlLiveInput()" onchange="onTextControlCommit()"
+                 class="w-16 accent-purple-600 cursor-pointer" />
+          <span id="textStrokeWidthValue" class="text-xs font-bold text-slate-700 w-6">4px</span>
+        </div>
+      </div>
+
+      <!-- ==================== SUB-BAR 3: TẠO STICKER (VIỀN MỊN LIỀN MẠCH KHÔNG RĂNG CƯA KHI CÓ TÓC) ==================== -->
+      <div id="stickerControlBar" class="hidden bg-white/95 backdrop-blur rounded-2xl toolbar-shadow px-5 py-2 border border-slate-200/80 flex flex-wrap items-center justify-center gap-4 max-w-4xl">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="stickerEnabledCheckbox" onchange="onStickerSettingCommit()" class="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
+          <span class="text-xs sm:text-sm font-semibold text-slate-800">Bật viền Sticker</span>
+        </label>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-500">Độ dày viền:</span>
+          <input type="range" id="strokeWidthSlider" min="4" max="80" value="24" 
+                 oninput="onStickerSliderLive()" onchange="onStickerSettingCommit()"
+                 class="w-32 accent-blue-600 cursor-pointer" />
+          <span id="strokeWidthValue" class="text-xs font-bold text-blue-600 w-9">24px</span>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-medium text-slate-500">Màu viền:</span>
+          <button onclick="setStrokeColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border-2 border-blue-600 shadow-sm cursor-pointer"></button>
+          <button onclick="setStrokeColor('#000000')" class="w-5 h-5 rounded-full bg-slate-900 border border-slate-300 shadow-sm cursor-pointer"></button>
+          <button onclick="setStrokeColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400 border border-slate-300 shadow-sm cursor-pointer"></button>
+          <input type="color" id="strokeColorPicker" value="#ffffff" onchange="setStrokeColor(this.value)" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" />
+        </div>
+
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="stickerShadowCheckbox" checked onchange="onStickerSettingCommit()" class="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
+          <span class="text-xs font-medium text-slate-600">Đổ bóng</span>
+        </label>
+
+        <button onclick="applyStickerSettingsToAll()" 
+                class="text-xs font-semibold px-3 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 transition cursor-pointer">
+          Áp dụng tất cả
+        </button>
+      </div>
+
+      <!-- ==================== SUB-BAR 4: VECTOR (DỰA TRÊN VIỀN TRẮNG TẠO STICKER) ==================== -->
+      <div id="vectorControlBar" class="hidden bg-white/95 backdrop-blur rounded-2xl toolbar-shadow px-5 py-2 border border-slate-200/80 flex flex-wrap items-center justify-center gap-4 max-w-5xl">
+        <!-- 1. Điều chỉnh độ mượt (Smooth) của Vector -->
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-500">Độ mượt (Smooth):</span>
+          <input type="range" id="vectorSmoothSlider" min="1" max="20" value="8" 
+                 oninput="document.getElementById('vectorSmoothValue').textContent = this.value; onVectorSettingChange(true);"
+                 onchange="onVectorSettingChange(false)"
+                 class="w-24 accent-rose-600 cursor-pointer" />
+          <span id="vectorSmoothValue" class="text-xs font-bold text-rose-600 w-6">8</span>
+        </div>
+
+        <!-- 2. Điều chỉnh độ mở rộng (Offset) của Vector so với viền trắng Sticker -->
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-500">Độ mở rộng (Offset):</span>
+          <input type="range" id="vectorOffsetSlider" min="-20" max="50" value="0" 
+                 oninput="document.getElementById('vectorOffsetValue').textContent = (this.value > 0 ? '+' : '') + this.value + 'px'; onVectorSettingChange(true);"
+                 onchange="onVectorSettingChange(false)"
+                 title="0px = Bám đúng theo viền trắng Sticker | > 0px = Mở rộng ra ngoài viền trắng | < 0px = Thu vào trong viền trắng"
+                 class="w-28 accent-rose-600 cursor-pointer" />
+          <span id="vectorOffsetValue" class="text-xs font-bold text-rose-600 w-10">0px</span>
+        </div>
+
+        <!-- 3. Điều chỉnh màu sắc của Vector -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-medium text-slate-500">Màu Vector:</span>
+          <button onclick="setVectorColor('#e11d48')" title="Đỏ hồng CutContour" class="w-5 h-5 rounded-full bg-rose-600 border-2 border-slate-300 shadow-sm cursor-pointer"></button>
+          <button onclick="setVectorColor('#00e5ff')" title="Xanh Cyan" class="w-5 h-5 rounded-full bg-cyan-400 border border-slate-300 shadow-sm cursor-pointer"></button>
+          <button onclick="setVectorColor('#22c55e')" title="Xanh lá" class="w-5 h-5 rounded-full bg-green-500 border border-slate-300 shadow-sm cursor-pointer"></button>
+          <button onclick="setVectorColor('#facc15')" title="Vàng" class="w-5 h-5 rounded-full bg-yellow-400 border border-slate-300 shadow-sm cursor-pointer"></button>
+          <input type="color" id="vectorColorPicker" value="#e11d48" oninput="setVectorColor(this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" title="Chọn màu tùy ý" />
+        </div>
+
+        <!-- 4. Nút nhận diện lại đường Vector -->
+        <button onclick="reDetectVectorPath()" 
+                class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-1.5 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Nhận diện lại Vector</span>
+        </button>
+
+        <button onclick="exportCurrentVectorAI()" 
+                class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-xl shadow-sm transition cursor-pointer">
+          Xuất .AI
+        </button>
+      </div>
+
+      <!-- Thanh chọn nền xem thử -->
+      <div id="bgPreviewBar" class="hidden bg-white/95 backdrop-blur rounded-2xl toolbar-shadow px-4 py-1.5 border border-slate-200/80 flex items-center gap-3 text-xs">
+        <span class="text-slate-500 font-medium">Nền xem thử:</span>
+        <button onclick="setCanvasBg('checkerboard')" class="px-2.5 py-1 rounded-lg checkerboard border border-slate-300 font-medium text-slate-700 cursor-pointer">Caro</button>
+        <button onclick="setCanvasBg('#ffffff')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 font-medium text-slate-700 cursor-pointer">Trắng</button>
+        <button onclick="setCanvasBg('#1e293b')" class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 font-medium text-white cursor-pointer">Tối</button>
+      </div>
+    </div>
+
+    <!-- ==================== VÙNG LÀM VIỆC TRUNG TÂM ==================== -->
+    <div class="flex-1 w-full max-w-6xl flex items-center justify-center gap-4 my-1.5 overflow-hidden">
+      
+      <!-- KHUNG PREVIEW -->
+      <div id="previewContainer" 
+           class="relative checkerboard rounded-[28px] upload-card-shadow border border-slate-200/80 flex-1 h-[58vh] flex items-center justify-center overflow-hidden">
+        
+        <canvas id="interactiveCanvas" class="w-full h-full block select-none"></canvas>
+
+        <!-- Vòng tròn con trỏ cọ vẽ -->
+        <div id="brushCursor" class="hidden pointer-events-none fixed rounded-full border-2 border-blue-600 bg-blue-400/20 z-50 -translate-x-1/2 -translate-y-1/2"></div>
+
+        <!-- Cụm điều khiển ZOOM IN / ZOOM OUT -->
+        <div class="absolute bottom-3 right-4 bg-white/95 backdrop-blur toolbar-shadow border border-slate-200 rounded-full px-2 py-1 flex items-center gap-1 z-20">
+          <button onclick="zoomPreview(-0.25)" title="Thu nhỏ" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 font-bold cursor-pointer">−</button>
+          <button onclick="resetZoomPan()" id="zoomPercentLabel" title="Bấm để vừa khung (100%)" class="text-xs font-bold text-slate-700 px-2 hover:text-blue-600 cursor-pointer">100%</button>
+          <button onclick="zoomPreview(0.25)" title="Phóng to" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 font-bold cursor-pointer">+</button>
+          <button onclick="resetZoomPan()" class="text-[11px] font-medium text-slate-500 hover:text-slate-800 px-1.5 border-l border-slate-200 cursor-pointer">Vừa khung</button>
+        </div>
+
+        <!-- Nhãn thông tin kích thước gốc -->
+        <div id="imageInfoBadge" class="absolute bottom-3 left-4 bg-slate-900/75 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-none">
+          <span id="imageNameLabel" class="font-medium truncate max-w-[160px]">image.png</span>
+          <span class="opacity-60">•</span>
+          <span id="imageDimLabel" class="text-emerald-300 font-semibold">Chất lượng gốc</span>
+        </div>
+
+        <!-- Huy hiệu báo đang giữ phím Space hoặc đang xem ảnh gốc -->
+        <div id="originalModeBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md z-20">
+          ĐANG XEM ẢNH GỐC (Nhấn phím Y để tắt)
+        </div>
+        <div id="spacePanBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 bg-slate-800/90 text-white text-xs font-semibold px-3.5 py-1 rounded-full shadow-md z-20 pointer-events-none">
+          ✋ Chế độ di chuyển (Space)
+        </div>
+
+        <!-- Lớp phủ Loading -->
+        <div id="processingOverlay" class="hidden absolute inset-0 bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center z-30 p-6 text-center">
+          <div class="w-12 h-12 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin mb-3"></div>
+          <p id="processingTitle" class="font-bold text-slate-800 text-base mb-1">Đang tự động tách nền...</p>
+          <p id="processingSubtitle" class="text-xs text-slate-500 max-w-md mb-3">
+            Vui lòng đợi trong giây lát...
+          </p>
+          <div class="w-60 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div id="progressBarFill" class="h-full bg-blue-600 transition-all duration-300" style="width: 15%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BẢNG QUẢN LÝ LAYER (CÓ NÚT BẬT / TẮT ĐÓNG MỞ DỄ DÀNG) -->
+      <aside id="layerPanel" class="hidden w-72 h-[58vh] bg-white rounded-[24px] upload-card-shadow border border-slate-200/80 p-3.5 flex flex-col justify-between shrink-0">
+        <div class="flex flex-col h-full overflow-hidden">
+          <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100">
+            <span class="font-bold text-xs uppercase tracking-wider text-slate-800">Quản lý Layer</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="addNewTextLayer()" class="text-xs font-semibold bg-purple-50 text-purple-600 hover:bg-purple-100 px-2 py-0.5 rounded-lg border border-purple-200 cursor-pointer">+ Chữ</button>
+              <button onclick="toggleLayerPanel(false)" title="Đóng bảng Layer" class="w-6 h-6 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold cursor-pointer">×</button>
+            </div>
+          </div>
+
+          <div id="layerListContainer" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
+
+          <div class="pt-2.5 mt-2 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed bg-slate-50 p-2 rounded-xl">
+            💡 Bấm <strong>↑ / ↓</strong> để đổi thứ tự đè lên nhau giữa Chữ và Hình ảnh.
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- DẢI THUMBNAIL HÀNG LOẠT PHÍA DƯỚI -->
+    <div class="w-full max-w-4xl flex flex-col items-center gap-1 z-20">
+      <div class="flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-3 py-1.5 rounded-2xl toolbar-shadow border border-slate-200/60 max-w-full overflow-x-auto">
+        <button onclick="triggerFileInput()" 
+                title="Thêm một hoặc nhiều hình ảnh"
+                class="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 transition cursor-pointer border border-slate-200/80">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+        </button>
+
+        <div id="thumbnailList" class="flex items-center gap-2 overflow-x-auto py-0.5 pr-1"></div>
+      </div>
+
+      <div id="batchSummaryText" class="text-xs text-slate-500 font-medium">
+        Đã sẵn sàng
+      </div>
+    </div>
+
+  </section>
+
+  <!-- THÔNG BÁO TOAST -->
+  <div id="toastNotice" class="fixed bottom-5 right-5 bg-slate-900 text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50 flex items-center gap-2">
+    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <span id="toastMessage">Đã áp dụng!</span>
+  </div>
+
+  <!-- SCRIPT XỬ LÝ TÁCH NỀN, LÀM MỊN VIỀN TÓC STICKER & VECTOR CHÍNH XÁC -->
+  <script type="module">
+    import { AutoModel, AutoProcessor, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
+
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+
+    let briaModel = null;
+    let briaProcessor = null;
+    let modelLoadingPromise = null;
+
+    const state = {
+      items: [],
+      selectedIndex: -1,
+      currentMode: 'cutout',
+      brushTool: 'erase',
+      brushSize: 40,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      isSpacePressed: false,
+      isPanning: false,
+      panStart: { x: 0, y: 0 },
+      layerPanelOpen: false,
+      globalSticker: {
+        enabled: false,
+        strokeWidth: 24,
+        strokeColor: '#ffffff',
+        shadowEnabled: true
+      },
+      vectorConfig: {
+        smooth: 10,
+        offset: 0,
+        color: '#e11d48'
+      },
+      isQueueRunning: false,
+      showingOriginal: false,
+      isPaintingMask: false,
+      isDraggingLayer: false,
+      isResizingText: false,
+      isRotatingText: false,
+      dragStartOffset: { x: 0, y: 0 },
+      lastBrushPos: null,
+      rafPending: false
+    };
+
+    // DOM Elements
+    const fileInput = document.getElementById('fileInput');
+    const uploadScreen = document.getElementById('uploadScreen');
+    const editorScreen = document.getElementById('editorScreen');
+    const headerNewUploadBtn = document.getElementById('headerNewUploadBtn');
+    const interactiveCanvas = document.getElementById('interactiveCanvas');
+    const interactiveCtx = interactiveCanvas.getContext('2d');
+    const brushCursor = document.getElementById('brushCursor');
+    const processingOverlay = document.getElementById('processingOverlay');
+    const processingTitle = document.getElementById('processingTitle');
+    const processingSubtitle = document.getElementById('processingSubtitle');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const thumbnailList = document.getElementById('thumbnailList');
+    const batchSummaryText = document.getElementById('batchSummaryText');
+    const imageNameLabel = document.getElementById('imageNameLabel');
+    const imageDimLabel = document.getElementById('imageDimLabel');
+    const previewContainer = document.getElementById('previewContainer');
+    const modelStatusDot = document.getElementById('modelStatusDot');
+    const modelStatusText = document.getElementById('modelStatusText');
+    const layerPanel = document.getElementById('layerPanel');
+    const toggleLayerPanelBtn = document.getElementById('toggleLayerPanelBtn');
+    const layerListContainer = document.getElementById('layerListContainer');
+    const originalModeBanner = document.getElementById('originalModeBanner');
+    const spacePanBanner = document.getElementById('spacePanBanner');
+
+    // Sub-bars
+    const cutoutControlBar = document.getElementById('cutoutControlBar');
+    const textControlBar = document.getElementById('textControlBar');
+    const stickerControlBar = document.getElementById('stickerControlBar');
+    const vectorControlBar = document.getElementById('vectorControlBar');
+    const bgPreviewBar = document.getElementById('bgPreviewBar');
+
+    // Controls
+    const stickerEnabledCheckbox = document.getElementById('stickerEnabledCheckbox');
+    const strokeWidthSlider = document.getElementById('strokeWidthSlider');
+    const strokeWidthValue = document.getElementById('strokeWidthValue');
+    const strokeColorPicker = document.getElementById('strokeColorPicker');
+    const stickerShadowCheckbox = document.getElementById('stickerShadowCheckbox');
+
+    const vectorSmoothSlider = document.getElementById('vectorSmoothSlider');
+    const vectorSmoothValue = document.getElementById('vectorSmoothValue');
+    const vectorOffsetSlider = document.getElementById('vectorOffsetSlider');
+    const vectorOffsetValue = document.getElementById('vectorOffsetValue');
+    const vectorColorPicker = document.getElementById('vectorColorPicker');
+
+    const textContentInput = document.getElementById('textContentInput');
+    const textFontSelect = document.getElementById('textFontSelect');
+    const textSizeSlider = document.getElementById('textSizeSlider');
+    const textSizeValue = document.getElementById('textSizeValue');
+    const textRotationSlider = document.getElementById('textRotationSlider');
+    const textRotationValue = document.getElementById('textRotationValue');
+    const textColorPicker = document.getElementById('textColorPicker');
+    const textStrokeColorPicker = document.getElementById('textStrokeColorPicker');
+    const textStrokeWidthSlider = document.getElementById('textStrokeWidthSlider');
+    const textStrokeWidthValue = document.getElementById('textStrokeWidthValue');
+
+    // Bật / Tắt bảng Quản lý Layer
+    window.toggleLayerPanel = (forceState) => {
+      state.layerPanelOpen = typeof forceState === 'boolean' ? forceState : !state.layerPanelOpen;
+      layerPanel.classList.toggle('hidden', !state.layerPanelOpen);
+      toggleLayerPanelBtn.className = state.layerPanelOpen
+        ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 transition cursor-pointer'
+        : 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer border border-transparent';
+      if (state.layerPanelOpen) renderLayerList();
+      setTimeout(() => scheduleViewportRender(), 20);
+    };
+
+    // Khởi tạo mô hình AI RMBG-1.4
+    async function ensureAIModelLoaded() {
+      if (briaModel && briaProcessor) return;
+      if (modelLoadingPromise) return modelLoadingPromise;
+
+      modelLoadingPromise = (async () => {
+        try {
+          modelStatusDot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping';
+          modelStatusText.textContent = 'Đang nạp AI...';
+
+          briaModel = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
+            config: { model_type: 'custom' },
+            progress_callback: (info) => {
+              if (info.status === 'progress' && info.progress) {
+                const pct = Math.round(info.progress);
+                progressBarFill.style.width = `${Math.max(10, pct)}%`;
+                processingTitle.textContent = `Đang tải mô hình AI tách nền (${pct}%)...`;
+              }
+            }
+          });
+
+          briaProcessor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4', {
+            config: {
+              do_normalize: true,
+              do_pad: false,
+              do_rescale: true,
+              do_resize: true,
+              image_mean: [0.5, 0.5, 0.5],
+              feature_extractor_type: 'ImageFeatureExtractor',
+              image_std: [1, 1, 1],
+              resample: 2,
+              rescale_factor: 0.00392156862745098,
+              size: { width: 1024, height: 1024 },
+            }
+          });
+
+          modelStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          modelStatusText.textContent = 'AI sẵn sàng';
+        } catch (err) {
+          console.error('Lỗi tải AI:', err);
+          modelStatusDot.className = 'w-2 h-2 rounded-full bg-red-500';
+          modelStatusText.textContent = 'Lỗi kết nối AI';
+          throw err;
+        }
+      })();
+
+      return modelLoadingPromise;
+    }
+
+    ensureAIModelLoaded().catch(() => {});
+
+    window.triggerFileInput = () => fileInput.click();
+    window.resetToHome = () => {
+      if (state.items.length === 0) return;
+      uploadScreen.classList.remove('hidden');
+      editorScreen.classList.add('hidden');
+      headerNewUploadBtn.classList.add('hidden');
+    };
+
+    window.promptImageUrl = async () => {
+      const url = prompt('Nhập đường dẫn (URL) hình ảnh cần tách nền:');
+      if (!url) return;
+      try {
+        showToast('Đang tải hình ảnh từ URL...');
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const fileName = url.split('/').pop()?.split('?')[0] || 'image_from_url.png';
+        const file = new File([blob], fileName, { type: blob.type || 'image/png' });
+        handleFiles([file]);
+      } catch (err) {
+        alert('Không thể tải ảnh từ URL này. Bạn hãy lưu ảnh về máy hoặc copy-paste (Ctrl+V) nhé!');
+      }
+    };
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleFiles(Array.from(e.target.files));
+        fileInput.value = '';
+      }
+    });
+
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer?.files?.length) {
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (files.length > 0) handleFiles(files);
+      }
+    });
+
+    window.addEventListener('paste', (e) => {
+      if (document.activeElement === textContentInput) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files = [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const f = item.getAsFile();
+          if (f) files.push(new File([f], `clipboard_${Date.now()}.png`, { type: f.type }));
+        }
+      }
+      if (files.length > 0) handleFiles(files);
+    });
+
+    // ==================== HỆ THỐNG PHÍM TẮT (CTRL+Z, CTRL+SHIFT+Z, SPACE, Y) ====================
+    window.addEventListener('keydown', (e) => {
+      const isTyping = document.activeElement === textContentInput || document.activeElement?.tagName === 'INPUT';
+
+      // Ctrl + Shift + Z: Redo
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+        if (!isTyping) {
+          e.preventDefault();
+          performRedo();
+        }
+        return;
+      }
+
+      // Ctrl + Z: Undo
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        if (!isTyping) {
+          e.preventDefault();
+          performUndo();
+        }
+        return;
+      }
+
+      // Space: Di chuyển
+      if (e.code === 'Space' && !isTyping) {
+        e.preventDefault();
+        if (!state.isSpacePressed) {
+          state.isSpacePressed = true;
+          interactiveCanvas.style.cursor = 'grab';
+          brushCursor.classList.add('hidden');
+          spacePanBanner.classList.remove('hidden');
+        }
+        return;
+      }
+
+      // Y: Xem ảnh gốc
+      if (e.key.toLowerCase() === 'y' && !e.ctrlKey && !e.metaKey && !isTyping) {
+        e.preventDefault();
+        toggleOriginalPreviewClick();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        state.isSpacePressed = false;
+        state.isPanning = false;
+        spacePanBanner.classList.add('hidden');
+        interactiveCanvas.style.cursor = (state.currentMode === 'cutout' && state.brushTool !== 'none') ? 'crosshair' : 'default';
+      }
+    });
+
+    // ==================== LỊCH SỬ UNDO / REDO ====================
+    function cloneLayersState(layers) {
+      return layers.map(l => ({ ...l }));
+    }
+
+    function pushHistorySnapshot(item) {
+      if (!item || !item.maskCanvas) return;
+      const mctx = item.maskCanvas.getContext('2d');
+      const maskData = mctx.getImageData(0, 0, item.width, item.height);
+      const layersCopy = cloneLayersState(item.layers);
+
+      if (item.historyIndex < item.historyStack.length - 1) {
+        item.historyStack = item.historyStack.slice(0, item.historyIndex + 1);
+      }
+
+      item.historyStack.push({
+        maskData,
+        layers: layersCopy,
+        selectedLayerId: item.selectedLayerId
+      });
+
+      if (item.historyStack.length > 20) {
+        item.historyStack.shift();
+      } else {
+        item.historyIndex = item.historyStack.length - 1;
+      }
+    }
+
+    function restoreHistorySnapshot(item, snapshot) {
+      item.maskCanvas.getContext('2d').putImageData(snapshot.maskData, 0, 0);
+      item.layers = cloneLayersState(snapshot.layers);
+      item.selectedLayerId = snapshot.selectedLayerId;
+      rebuildCutoutFromMask(item);
+      syncTextControlsWithSelected(item);
+      renderLayerList();
+      rebuildDisplayComposite(item, false);
+      renderThumbnails();
+    }
+
+    window.performUndo = () => {
+      const item = state.items[state.selectedIndex];
+      if (!item || item.historyIndex <= 0) {
+        showToast('Không còn bước nào để Hoàn tác (Undo)!');
+        return;
+      }
+      item.historyIndex--;
+      restoreHistorySnapshot(item, item.historyStack[item.historyIndex]);
+      showToast('↩ Đã hoàn tác (Undo)');
+    };
+
+    window.performRedo = () => {
+      const item = state.items[state.selectedIndex];
+      if (!item || item.historyIndex >= item.historyStack.length - 1) {
+        showToast('Không có bước nào để Làm lại (Redo)!');
+        return;
+      }
+      item.historyIndex++;
+      restoreHistorySnapshot(item, item.historyStack[item.historyIndex]);
+      showToast('↪ Đã làm lại (Redo)');
+    };
+
+    // ==================== KHỞI TẠO FILE ẢNH ====================
+    async function handleFiles(files) {
+      uploadScreen.classList.add('hidden');
+      editorScreen.classList.remove('hidden');
+      headerNewUploadBtn.classList.remove('hidden');
+
+      const startIndex = state.items.length;
+
+      for (const file of files) {
+        const originalUrl = URL.createObjectURL(file);
+        const origImg = await loadImageElement(originalUrl);
+        const w = origImg.naturalWidth;
+        const h = origImg.naturalHeight;
+
+        const pad = Math.round(Math.max(w, h) * 0.22);
+        const workW = w + pad * 2;
+        const workH = h + pad * 2;
+        const proxyScale = Math.min(1, 900 / Math.max(workW, workH));
+
+        const imageLayer = {
+          id: 'layer_main_image',
+          type: 'image',
+          name: '🖼 Hình ảnh tách nền',
+          x: workW / 2,
+          y: workH / 2,
+          visible: true
+        };
+
+        const item = {
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          name: file.name.replace(/\.[^/.]+$/, ''),
+          originalFile: file,
+          originalUrl,
+          origImg,
+          width: w,
+          height: h,
+          pad,
+          workW,
+          workH,
+          proxyScale,
+          status: 'queued',
+          aiAlphaMask: null,
+          maskCanvas: null,
+          cutoutCanvas: null,
+          layers: [imageLayer],
+          selectedLayerId: 'layer_main_image',
+          historyStack: [],
+          historyIndex: -1,
+          stickerEnabled: state.globalSticker.enabled,
+          strokeWidth: state.globalSticker.strokeWidth,
+          strokeColor: state.globalSticker.strokeColor,
+          shadowEnabled: state.globalSticker.shadowEnabled,
+          vectorEnabled: false,
+          vectorPaths: [],
+          displayCanvas: null,
+          thumbUrl: originalUrl
+        };
+        state.items.push(item);
+      }
+
+      if (state.selectedIndex === -1 || startIndex === 0) {
+        selectItem(0);
+      } else {
+        selectItem(startIndex);
+      }
+
+      renderThumbnails();
+      updateBatchSummary();
+      processQueue();
+    }
+
+    function loadImageElement(url) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    function cleanMaskAndKeepMainSubject(maskData, width, height) {
+      const total = width * height;
+      const binary = new Uint8Array(total);
+      for (let i = 0; i < total; i++) binary[i] = maskData[i] > 110 ? 1 : 0;
+
+      const visited = new Uint8Array(total);
+      const components = [];
+      const queue = new Int32Array(total);
+
+      for (let i = 0; i < total; i++) {
+        if (binary[i] && !visited[i]) {
+          let head = 0, tail = 0;
+          queue[tail++] = i;
+          visited[i] = 1;
+          const pixels = [];
+
+          while (head < tail) {
+            const curr = queue[head++];
+            pixels.push(curr);
+            const x = curr % width;
+            const y = (curr - x) / width;
+
+            if (x > 0) { const n = curr - 1; if (binary[n] && !visited[n]) { visited[n] = 1; queue[tail++] = n; } }
+            if (x < width - 1) { const n = curr + 1; if (binary[n] && !visited[n]) { visited[n] = 1; queue[tail++] = n; } }
+            if (y > 0) { const n = curr - width; if (binary[n] && !visited[n]) { visited[n] = 1; queue[tail++] = n; } }
+            if (y < height - 1) { const n = curr + width; if (binary[n] && !visited[n]) { visited[n] = 1; queue[tail++] = n; } }
+          }
+          components.push(pixels);
+        }
+      }
+
+      if (components.length <= 1) return new Uint8ClampedArray(maskData);
+
+      components.sort((a, b) => b.length - a.length);
+      const largestArea = components[0].length;
+      const keepMap = new Uint8Array(total);
+
+      for (const comp of components) {
+        if (comp.length >= largestArea * 0.15) {
+          for (let j = 0; j < comp.length; j++) keepMap[comp[j]] = 1;
+        }
+      }
+
+      const cleaned = new Uint8ClampedArray(total);
+      for (let i = 0; i < total; i++) cleaned[i] = keepMap[i] ? maskData[i] : 0;
+      return cleaned;
+    }
+
+    function initItemMaskCanvas(item, alphaArray) {
+      const mc = document.createElement('canvas');
+      mc.width = item.width;
+      mc.height = item.height;
+      const mctx = mc.getContext('2d');
+      const imgData = mctx.createImageData(item.width, item.height);
+      for (let i = 0; i < alphaArray.length; i++) {
+        imgData.data[i * 4] = 255;
+        imgData.data[i * 4 + 1] = 255;
+        imgData.data[i * 4 + 2] = 255;
+        imgData.data[i * 4 + 3] = alphaArray[i];
+      }
+      mctx.putImageData(imgData, 0, 0);
+      item.maskCanvas = mc;
+      rebuildCutoutFromMask(item);
+
+      item.historyStack = [];
+      item.historyIndex = -1;
+      pushHistorySnapshot(item);
+    }
+
+    function rebuildCutoutFromMask(item) {
+      if (!item.cutoutCanvas) {
+        item.cutoutCanvas = document.createElement('canvas');
+        item.cutoutCanvas.width = item.width;
+        item.cutoutCanvas.height = item.height;
+      }
+      const ctx = item.cutoutCanvas.getContext('2d');
+      ctx.clearRect(0, 0, item.width, item.height);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(item.origImg, 0, 0);
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(item.maskCanvas, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    async function removeBgWithAI(item) {
+      await ensureAIModelLoaded();
+
+      processingTitle.textContent = `Đang tách nền: ${item.name}...`;
+      processingSubtitle.textContent = `Độ phân giải gốc ${item.width} × ${item.height} px`;
+      progressBarFill.style.width = '75%';
+
+      const image = await RawImage.fromURL(item.originalUrl);
+      const { pixel_values } = await briaProcessor(image);
+      const { output } = await briaModel({ input: pixel_values });
+
+      const maskImage = await RawImage.fromTensor(output[0].mul(255).to('uint8')).resize(image.width, image.height);
+      const cleanedMask = cleanMaskAndKeepMainSubject(maskImage.data, image.width, image.height);
+
+      item.aiAlphaMask = cleanedMask;
+      initItemMaskCanvas(item, cleanedMask);
+      progressBarFill.style.width = '100%';
+    }
+
+    async function processQueue() {
+      if (state.isQueueRunning) return;
+      state.isQueueRunning = true;
+
+      while (true) {
+        const nextItem = state.items.find(i => i.status === 'queued');
+        if (!nextItem) break;
+
+        nextItem.status = 'processing';
+        renderThumbnails();
+        updateMainViewIfSelected(nextItem);
+        updateBatchSummary();
+
+        try {
+          await removeBgWithAI(nextItem);
+          rebuildDisplayComposite(nextItem, false);
+          nextItem.status = 'done';
+        } catch (err) {
+          console.error('Lỗi khi tách nền:', err);
+          nextItem.status = 'error';
+          showToast('Có lỗi khi xử lý ảnh!');
+        }
+
+        renderThumbnails();
+        updateMainViewIfSelected(nextItem);
+        updateBatchSummary();
+      }
+
+      state.isQueueRunning = false;
+    }
+
+    // ==================== VẼ LAYER & THUẬT TOÁN KHỬ RĂNG CƯA TÓC CHO VIỀN STICKER ====================
+    function drawAllLayersInOrder(ctx, item, scale = 1.0) {
+      if (!item.layers) return;
+      for (const layer of item.layers) {
+        if (layer.visible === false) continue;
+
+        if (layer.type === 'image') {
+          const imgX = (layer.x - item.width / 2) * scale;
+          const imgY = (layer.y - item.height / 2) * scale;
+          ctx.drawImage(item.cutoutCanvas, 0, 0, item.width, item.height, imgX, imgY, item.width * scale, item.height * scale);
+        } else if (layer.type === 'text') {
+          ctx.save();
+          ctx.translate(layer.x * scale, layer.y * scale);
+          ctx.rotate(((layer.rotation || 0) * Math.PI) / 180);
+
+          const fontSize = Math.max(8, layer.fontSize * scale);
+          ctx.font = `800 ${fontSize}px ${layer.fontFamily}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round';
+          ctx.miterLimit = 2;
+
+          if (layer.strokeWidth > 0) {
+            ctx.lineWidth = layer.strokeWidth * 2 * scale;
+            ctx.strokeStyle = layer.strokeColor || '#1e293b';
+            ctx.strokeText(layer.text, 0, 0);
+          }
+
+          ctx.fillStyle = layer.color || '#e11d48';
+          ctx.fillText(layer.text, 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+
+    function parseHexToRGB(hex) {
+      const clean = (hex || '#ffffff').replace('#', '');
+      const num = parseInt(clean, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    // THUẬT TOÁN MỚI: Tạo viền trắng Sticker tròn mượt tuyệt đối, KHÔNG BỊ GAI RĂNG CƯA KHI GẶP TÓC MẢNH
+    // Nguyên lý:
+    // 1. Lọc bỏ các sợi tóc mờ nửa trong suốt (Alpha < 140) khi tạo lõi mặt nạ (để các sợi tóc mảnh không bị phóng đại thành gai nhọn).
+    // 2. Giãn nở đa hướng tạo hình bao quanh.
+    // 3. Áp dụng bộ lọc làm mịn Gaussian Blur + Phân ngưỡng dải mượt (Smoothstep Alpha Thresholding - kỹ thuật chuẩn Photoshop/Procreate)
+    //    giúp mép ngoài của viền trắng bo tròn liền mạch 100% như cắt bế thật!
+    function buildUnifiedStickerOutlineAuto(fgCanvas, item, scale, strokeRadius, strokeColor, fastMode) {
+      const w = fgCanvas.width;
+      const h = fgCanvas.height;
+      const rgb = parseHexToRGB(strokeColor);
+
+      // Bước 1: Tạo lõi mặt nạ đã khử các tia tóc mờ (De-spiked Core Silhouette)
+      const coreCanvas = document.createElement('canvas');
+      coreCanvas.width = w;
+      coreCanvas.height = h;
+      const coreCtx = coreCanvas.getContext('2d');
+      coreCtx.drawImage(fgCanvas, 0, 0);
+
+      // Tự động nối cầu giữa chữ và hình ảnh
+      const imgLayer = item.layers.find(l => l.type === 'image' && l.visible !== false);
+      const textLayers = item.layers.filter(l => l.type === 'text' && l.visible !== false);
+
+      if (imgLayer && textLayers.length > 0 && strokeRadius > 0) {
+        const imgCx = imgLayer.x * scale;
+        const imgCy = imgLayer.y * scale;
+        coreCtx.save();
+        coreCtx.strokeStyle = strokeColor;
+        coreCtx.lineCap = 'round';
+        coreCtx.lineWidth = Math.max(6, strokeRadius * 1.4);
+
+        for (const tLayer of textLayers) {
+          const tx = tLayer.x * scale;
+          const ty = tLayer.y * scale;
+          const dx = imgCx - tx;
+          const dy = imgCy - ty;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 1) {
+            const bridgeLen = Math.min(dist * 0.4, strokeRadius * 2.2);
+            coreCtx.beginPath();
+            coreCtx.moveTo(tx, ty);
+            coreCtx.lineTo(tx + (dx / dist) * bridgeLen, ty + (dy / dist) * bridgeLen);
+            coreCtx.stroke();
+          }
+        }
+        coreCtx.restore();
+      }
+
+      // Lọc bỏ các tia tóc bán trong suốt khỏi lõi tạo viền để triệt tiêu gai nhọn
+      const coreImgData = coreCtx.getImageData(0, 0, w, h);
+      const cData = coreImgData.data;
+      for (let i = 0; i < w * h; i++) {
+        const a = cData[i * 4 + 3];
+        // Chỉ những vùng đặc thực sự (a >= 135) mới được dùng làm tâm phóng viền
+        cData[i * 4 + 3] = a >= 135 ? 255 : 0;
+        cData[i * 4] = rgb.r;
+        cData[i * 4 + 1] = rgb.g;
+        cData[i * 4 + 2] = rgb.b;
+      }
+      coreCtx.putImageData(coreImgData, 0, 0);
+
+      // Bước 2: Giãn nở đa hướng tạo khung viền
+      const dilatedCanvas = document.createElement('canvas');
+      dilatedCanvas.width = w;
+      dilatedCanvas.height = h;
+      const dilCtx = dilatedCanvas.getContext('2d');
+
+      const steps = fastMode ? 24 : Math.min(64, Math.max(36, Math.round(strokeRadius * 1.8)));
+      for (let i = 0; i < steps; i++) {
+        const angle = (i * 2 * Math.PI) / steps;
+        dilCtx.drawImage(coreCanvas, Math.cos(angle) * strokeRadius, Math.sin(angle) * strokeRadius);
+      }
+
+      const innerRings = fastMode ? [0.5] : [0.3, 0.6, 0.85];
+      for (const r of innerRings) {
+        const rad = strokeRadius * r;
+        const subSteps = fastMode ? 12 : 20;
+        for (let i = 0; i < subSteps; i++) {
+          const angle = (i * 2 * Math.PI) / subSteps;
+          dilCtx.drawImage(coreCanvas, Math.cos(angle) * rad, Math.sin(angle) * rad);
+        }
+      }
+
+      // Bước 3: Làm chảy mượt biên (Gaussian Blur + Smooth Thresholding) để lấp kín khe tóc & xóa sạch răng cưa
+      const smoothCanvas = document.createElement('canvas');
+      smoothCanvas.width = w;
+      smoothCanvas.height = h;
+      const sCtx = smoothCanvas.getContext('2d');
+
+      const blurRadius = Math.max(2.5, Math.min(18, strokeRadius * 0.32));
+      sCtx.filter = `blur(${blurRadius}px)`;
+      sCtx.drawImage(dilatedCanvas, 0, 0);
+      sCtx.filter = 'none';
+
+      // Phân ngưỡng dải mượt (Anti-aliased Threshold) tạo đường cong tròn trịa tuyệt đối
+      const sImgData = sCtx.getImageData(0, 0, w, h);
+      const sData = sImgData.data;
+      const lowT = 105;
+      const highT = 140;
+      const rangeT = highT - lowT;
+
+      for (let i = 0; i < w * h; i++) {
+        const a = sData[i * 4 + 3];
+        let outA = 0;
+        if (a >= highT) {
+          outA = 255;
+        } else if (a > lowT) {
+          outA = Math.round(((a - lowT) / rangeT) * 255);
+        }
+        sData[i * 4] = rgb.r;
+        sData[i * 4 + 1] = rgb.g;
+        sData[i * 4 + 2] = rgb.b;
+        sData[i * 4 + 3] = outA;
+      }
+      sCtx.putImageData(sImgData, 0, 0);
+
+      return smoothCanvas;
+    }
+
+    // ==================== NHẬN DIỆN ĐƯỜNG VECTOR TỪ VIỀN TRẮNG STICKER ====================
+    function smoothClosedVectorLoop(points, smoothness) {
+      const nRaw = points.length;
+      if (nRaw < 8) return points;
+
+      const step = nRaw > 120 ? 2 : 1;
+      let pts = [];
+      for (let i = 0; i < nRaw; i += step) {
+        pts.push({ x: points[i].x, y: points[i].y });
+      }
+
+      const passes = Math.max(2, Math.round(smoothness * 1.8));
+      const lambda = 0.50;
+      const mu = -0.515;
+
+      for (let iter = 0; iter < passes; iter++) {
+        const n = pts.length;
+        const temp = new Array(n);
+        for (let i = 0; i < n; i++) {
+          const prev = pts[(i - 1 + n) % n];
+          const curr = pts[i];
+          const next = pts[(i + 1) % n];
+          temp[i] = {
+            x: curr.x + lambda * (0.5 * (prev.x + next.x) - curr.x),
+            y: curr.y + lambda * (0.5 * (prev.y + next.y) - curr.y)
+          };
+        }
+        const nextPts = new Array(n);
+        for (let i = 0; i < n; i++) {
+          const prev = temp[(i - 1 + n) % n];
+          const curr = temp[i];
+          const next = temp[(i + 1) % n];
+          nextPts[i] = {
+            x: curr.x + mu * (0.5 * (prev.x + next.x) - curr.x),
+            y: curr.y + mu * (0.5 * (prev.y + next.y) - curr.y)
+          };
+        }
+        pts = nextPts;
+      }
+
+      return pts;
+    }
+
+    function traceVectorFromStickerOutline(stickerOutlineCanvas, canvasScale, smoothness = 10, fastMode = false) {
+      const srcW = stickerOutlineCanvas.width;
+      const srcH = stickerOutlineCanvas.height;
+      const traceScale = Math.min(1, (fastMode ? 260 : 380) / Math.max(srcW, srcH));
+      const tw = Math.max(36, Math.round(srcW * traceScale));
+      const th = Math.max(36, Math.round(srcH * traceScale));
+
+      const tCanvas = document.createElement('canvas');
+      tCanvas.width = tw;
+      tCanvas.height = th;
+      const tCtx = tCanvas.getContext('2d');
+      tCtx.clearRect(0, 0, tw, th);
+      tCtx.drawImage(stickerOutlineCanvas, 0, 0, tw, th);
+
+      const imgData = tCtx.getImageData(0, 0, tw, th).data;
+      const totalPixels = tw * th;
+      const solid = new Uint8Array(totalPixels);
+
+      // Giữ lề 3px trống quanh biên để thuật toán loang nền ngoài luôn bao quanh 100%
+      for (let y = 3; y < th - 3; y++) {
+        for (let x = 3; x < tw - 3; x++) {
+          if (imgData[(y * tw + x) * 4 + 3] >= 120) {
+            solid[y * tw + x] = 1;
+          }
+        }
+      }
+
+      const exterior = new Uint8Array(totalPixels);
+      const queue = new Int32Array(totalPixels);
+
+      // Lấp đầy mọi lỗ thủng bên trong & khử hoàn toàn điểm giao cắt 2x2 (saddle points)
+      for (let pass = 0; pass < 6; pass++) {
+        exterior.fill(0);
+        let head = 0, tail = 0;
+        exterior[0] = 1;
+        queue[tail++] = 0;
+
+        while (head < tail) {
+          const idx = queue[head++];
+          const x = idx % tw;
+          const y = (idx - x) / tw;
+
+          if (x > 0) {
+            const n = idx - 1;
+            if (solid[n] === 0 && exterior[n] === 0) { exterior[n] = 1; queue[tail++] = n; }
+          }
+          if (x + 1 < tw) {
+            const n = idx + 1;
+            if (solid[n] === 0 && exterior[n] === 0) { exterior[n] = 1; queue[tail++] = n; }
+          }
+          if (y > 0) {
+            const n = idx - tw;
+            if (solid[n] === 0 && exterior[n] === 0) { exterior[n] = 1; queue[tail++] = n; }
+          }
+          if (y + 1 < th) {
+            const n = idx + tw;
+            if (solid[n] === 0 && exterior[n] === 0) { exterior[n] = 1; queue[tail++] = n; }
+          }
+        }
+
+        for (let i = 0; i < totalPixels; i++) {
+          solid[i] = exterior[i] === 0 ? 1 : 0;
+        }
+
+        let fixedSaddle = false;
+        for (let vy = 1; vy < th - 1; vy++) {
+          const rowAbove = (vy - 1) * tw;
+          const rowBelow = vy * tw;
+          for (let vx = 1; vx < tw - 1; vx++) {
+            const tl = solid[rowAbove + vx - 1];
+            const tr = solid[rowAbove + vx];
+            const bl = solid[rowBelow + vx - 1];
+            const br = solid[rowBelow + vx];
+            if ((tl === 1 && br === 1 && tr === 0 && bl === 0) || (tr === 1 && bl === 1 && tl === 0 && br === 0)) {
+              solid[rowAbove + vx - 1] = 1;
+              solid[rowAbove + vx] = 1;
+              solid[rowBelow + vx - 1] = 1;
+              solid[rowBelow + vx] = 1;
+              fixedSaddle = true;
+            }
+          }
+        }
+        if (!fixedSaddle) break;
+      }
+
+      // Tạo đồ thị đỉnh biên có hướng 1-1 (mỗi đỉnh biên có đúng 1 cạnh đi ra)
+      const vw = tw + 1;
+      const vh = th + 1;
+      const nextVertex = new Int32Array(vw * vh).fill(-1);
+
+      for (let y = 1; y < th - 1; y++) {
+        for (let x = 1; x < tw - 1; x++) {
+          if (solid[y * tw + x] !== 1) continue;
+
+          // Cạnh trên: (x, y) -> (x + 1, y)
+          if (solid[(y - 1) * tw + x] === 0) {
+            nextVertex[y * vw + x] = y * vw + (x + 1);
+          }
+          // Cạnh phải: (x + 1, y) -> (x + 1, y + 1)
+          if (solid[y * tw + (x + 1)] === 0) {
+            nextVertex[y * vw + (x + 1)] = (y + 1) * vw + (x + 1);
+          }
+          // Cạnh dưới: (x + 1, y + 1) -> (x, y + 1)
+          if (solid[(y + 1) * tw + x] === 0) {
+            nextVertex[(y + 1) * vw + (x + 1)] = (y + 1) * vw + x;
+          }
+          // Cạnh trái: (x, y + 1) -> (x, y)
+          if (solid[y * tw + (x - 1)] === 0) {
+            nextVertex[(y + 1) * vw + x] = y * vw + x;
+          }
+        }
+      }
+
+      const visited = new Uint8Array(vw * vh);
+      const totalScale = canvasScale * traceScale;
+      const loops = [];
+
+      for (let startV = 0; startV < nextVertex.length; startV++) {
+        if (nextVertex[startV] === -1 || visited[startV]) continue;
+
+        const cycle = [];
+        let curr = startV;
+        while (curr !== -1 && !visited[curr]) {
+          visited[curr] = 1;
+          const vx = curr % vw;
+          const vy = (curr - vx) / vw;
+          cycle.push({
+            x: vx / totalScale,
+            y: vy / totalScale
+          });
+          curr = nextVertex[curr];
+        }
+
+        if (curr === startV && cycle.length >= 20) {
+          loops.push(smoothClosedVectorLoop(cycle, smoothness));
+        }
+      }
+
+      // Sắp xếp chu trình lớn nhất lên đầu
+      loops.sort((a, b) => b.length - a.length);
+      return loops;
+    }
+
+    function rebuildDisplayComposite(item, fastMode = false) {
+      if (!item || !item.cutoutCanvas) return;
+
+      const scale = fastMode ? Math.min(1, 560 / Math.max(item.workW, item.workH)) : item.proxyScale;
+      const w = Math.max(50, Math.round(item.workW * scale));
+      const h = Math.max(50, Math.round(item.workH * scale));
+
+      const fgCanvas = document.createElement('canvas');
+      fgCanvas.width = w;
+      fgCanvas.height = h;
+      const fgCtx = fgCanvas.getContext('2d');
+
+      drawAllLayersInOrder(fgCtx, item, scale);
+
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = w;
+      outCanvas.height = h;
+      const outCtx = outCanvas.getContext('2d');
+
+      const baseRef = Math.max(item.width, item.height) * scale;
+      const scaledStroke = item.stickerEnabled
+        ? Math.max(2, Math.round((item.strokeWidth / 700) * baseRef))
+        : 0;
+
+      let stickerOutlineCanvas = null;
+
+      if (item.stickerEnabled && scaledStroke > 0) {
+        stickerOutlineCanvas = buildUnifiedStickerOutlineAuto(fgCanvas, item, scale, scaledStroke, item.strokeColor || '#ffffff', fastMode);
+
+        if (item.shadowEnabled) {
+          outCtx.save();
+          outCtx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+          outCtx.shadowBlur = Math.max(3, Math.round(scaledStroke * 0.4));
+          outCtx.shadowOffsetY = Math.max(1, Math.round(scaledStroke * 0.15));
+          outCtx.drawImage(stickerOutlineCanvas, 0, 0);
+          outCtx.restore();
+        }
+        outCtx.drawImage(stickerOutlineCanvas, 0, 0);
+      }
+
+      // Tạo đường Vector dựa trực tiếp trên viền trắng đã tạo từ chức năng "Tạo Sticker"
+      if (state.currentMode === 'vector' || item.vectorEnabled || item.stickerEnabled) {
+        const baseStickerRadius = Math.max(2, Math.round(((item.strokeWidth || 24) / 700) * baseRef));
+        const scaledOffset = Math.round(((state.vectorConfig.offset || 0) / 700) * baseRef);
+        const effectiveVectorRadius = Math.max(2, baseStickerRadius + scaledOffset);
+
+        let vectorSourceCanvas = stickerOutlineCanvas;
+        if (!vectorSourceCanvas || scaledOffset !== 0) {
+          vectorSourceCanvas = buildUnifiedStickerOutlineAuto(
+            fgCanvas,
+            item,
+            scale,
+            effectiveVectorRadius,
+            '#ffffff',
+            fastMode
+          );
+        }
+
+        item.vectorPaths = traceVectorFromStickerOutline(
+          vectorSourceCanvas,
+          scale,
+          state.vectorConfig.smooth || 10,
+          fastMode
+        );
+      }
+
+      outCtx.drawImage(fgCanvas, 0, 0);
+      item.displayCanvas = outCanvas;
+
+      if (!fastMode) {
+        item.thumbUrl = outCanvas.toDataURL('image/png');
+      }
+
+      scheduleViewportRender();
+    }
+
+    async function renderFullResolutionExportCanvas(item) {
+      const w = item.workW;
+      const h = item.workH;
+
+      const fgCanvas = document.createElement('canvas');
+      fgCanvas.width = w;
+      fgCanvas.height = h;
+      const fgCtx = fgCanvas.getContext('2d');
+
+      drawAllLayersInOrder(fgCtx, item, 1.0);
+
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = w;
+      finalCanvas.height = h;
+      const finalCtx = finalCanvas.getContext('2d');
+
+      const baseRef = Math.max(item.width, item.height);
+      const scaledStroke = item.stickerEnabled
+        ? Math.max(4, Math.round((item.strokeWidth / 700) * baseRef))
+        : 0;
+
+      if (item.stickerEnabled && scaledStroke > 0) {
+        const outlineCanvas = buildUnifiedStickerOutlineAuto(fgCanvas, item, 1.0, scaledStroke, item.strokeColor || '#ffffff', false);
+        if (item.shadowEnabled) {
+          finalCtx.save();
+          finalCtx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+          finalCtx.shadowBlur = Math.max(6, Math.round(scaledStroke * 0.45));
+          finalCtx.shadowOffsetY = Math.max(2, Math.round(scaledStroke * 0.15));
+          finalCtx.drawImage(outlineCanvas, 0, 0);
+          finalCtx.restore();
+        }
+        finalCtx.drawImage(outlineCanvas, 0, 0);
+      }
+
+      finalCtx.drawImage(fgCanvas, 0, 0);
+      return cropTransparentCanvas(finalCanvas, 14);
+    }
+
+    function cropTransparentCanvas(sourceCanvas, margin = 12) {
+      const w = sourceCanvas.width;
+      const h = sourceCanvas.height;
+      const data = sourceCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+
+      let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (data[(y * w + x) * 4 + 3] > 10) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            found = true;
+          }
+        }
+      }
+      if (!found) return sourceCanvas;
+
+      minX = Math.max(0, minX - margin);
+      minY = Math.max(0, minY - margin);
+      maxX = Math.min(w - 1, maxX + margin);
+      maxY = Math.min(h - 1, maxY + margin);
+
+      const cropW = maxX - minX + 1;
+      const cropH = maxY - minY + 1;
+      const out = document.createElement('canvas');
+      out.width = cropW;
+      out.height = cropH;
+      out.getContext('2d').drawImage(sourceCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+      return out;
+    }
+
+    // ==================== VẼ KHUNG PREVIEW ====================
+    window.scheduleViewportRender = () => {
+      if (state.rafPending) return;
+      state.rafPending = true;
+      requestAnimationFrame(() => {
+        state.rafPending = false;
+        renderInteractiveViewport();
+      });
+    };
+
+    function getViewportTransform(item) {
+      const rect = previewContainer.getBoundingClientRect();
+      if (interactiveCanvas.width !== Math.round(rect.width) || interactiveCanvas.height !== Math.round(rect.height)) {
+        interactiveCanvas.width = Math.round(rect.width);
+        interactiveCanvas.height = Math.round(rect.height);
+      }
+      const cw = interactiveCanvas.width;
+      const ch = interactiveCanvas.height;
+      const fitScale = Math.min((cw - 32) / item.workW, (ch - 32) / item.workH);
+      const totalScale = fitScale * state.zoom;
+      const offsetX = (cw - item.workW * totalScale) / 2 + state.panX;
+      const offsetY = (ch - item.workH * totalScale) / 2 + state.panY;
+      return { cw, ch, fitScale, totalScale, offsetX, offsetY };
+    }
+
+    function renderInteractiveViewport() {
+      const item = state.items[state.selectedIndex];
+      if (!item || !item.displayCanvas) return;
+
+      const { cw, ch, totalScale, offsetX, offsetY } = getViewportTransform(item);
+      interactiveCtx.setTransform(1, 0, 0, 1, 0, 0);
+      interactiveCtx.clearRect(0, 0, cw, ch);
+
+      interactiveCtx.save();
+      interactiveCtx.translate(offsetX, offsetY);
+      interactiveCtx.scale(totalScale, totalScale);
+
+      if (state.showingOriginal) {
+        const imgLayer = item.layers.find(l => l.type === 'image');
+        const ix = imgLayer ? imgLayer.x - item.width / 2 : item.pad;
+        const iy = imgLayer ? imgLayer.y - item.height / 2 : item.pad;
+        interactiveCtx.drawImage(item.origImg, ix, iy, item.width, item.height);
+        interactiveCtx.restore();
+        return;
+      }
+
+      const showGhost = document.getElementById('showOriginalGhostCheckbox')?.checked;
+      if (state.currentMode === 'cutout' && showGhost) {
+        const imgLayer = item.layers.find(l => l.type === 'image');
+        const ix = imgLayer ? imgLayer.x - item.width / 2 : item.pad;
+        const iy = imgLayer ? imgLayer.y - item.height / 2 : item.pad;
+        interactiveCtx.save();
+        interactiveCtx.globalAlpha = 0.32;
+        interactiveCtx.drawImage(item.origImg, ix, iy, item.width, item.height);
+        interactiveCtx.restore();
+      }
+
+      interactiveCtx.drawImage(item.displayCanvas, 0, 0, item.workW, item.workH);
+
+      // Hiển thị đường Vector mượt mà dựa trên viền trắng Sticker
+      if ((state.currentMode === 'vector' || item.vectorEnabled) && item.vectorPaths && item.vectorPaths.length > 0) {
+        const invScale = 1 / totalScale;
+        const vecColor = state.vectorConfig.color || '#e11d48';
+
+        interactiveCtx.save();
+        interactiveCtx.lineJoin = 'round';
+        interactiveCtx.lineCap = 'round';
+
+        for (const path of item.vectorPaths) {
+          if (path.length < 3) continue;
+
+          const traceSmoothSpline = () => {
+            interactiveCtx.beginPath();
+            const n = path.length;
+            const startMidX = (path[n - 1].x + path[0].x) * 0.5;
+            const startMidY = (path[n - 1].y + path[0].y) * 0.5;
+            interactiveCtx.moveTo(startMidX, startMidY);
+
+            for (let i = 0; i < n; i++) {
+              const pCurr = path[i];
+              const pNext = path[(i + 1) % n];
+              const midX = (pCurr.x + pNext.x) * 0.5;
+              const midY = (pCurr.y + pNext.y) * 0.5;
+              interactiveCtx.quadraticCurveTo(pCurr.x, pCurr.y, midX, midY);
+            }
+            interactiveCtx.closePath();
+          };
+
+          // Lớp nền tương phản nhẹ giúp đường Vector nổi bật trên mọi nền
+          traceSmoothSpline();
+          interactiveCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          interactiveCtx.lineWidth = 4.4 * invScale;
+          interactiveCtx.stroke();
+
+          // Đường Vector chính theo màu người dùng chọn
+          traceSmoothSpline();
+          interactiveCtx.strokeStyle = vecColor;
+          interactiveCtx.lineWidth = 2.6 * invScale;
+          interactiveCtx.stroke();
+        }
+
+        interactiveCtx.restore();
+      }
+
+      if (state.currentMode === 'text' && item.selectedLayerId && !state.isPaintingMask) {
+        const layer = item.layers.find(t => t.id === item.selectedLayerId);
+        if (layer && layer.visible !== false && layer.type === 'text') {
+          const metrics = getTextLayerBox(layer);
+          const halfW = metrics.boxW / 2;
+          const halfH = metrics.boxH / 2;
+          const invScale = 1 / totalScale;
+
+          interactiveCtx.save();
+          interactiveCtx.translate(layer.x, layer.y);
+          interactiveCtx.rotate(((layer.rotation || 0) * Math.PI) / 180);
+
+          interactiveCtx.strokeStyle = '#9333ea';
+          interactiveCtx.lineWidth = 2 * invScale;
+          interactiveCtx.setLineDash([6 * invScale, 5 * invScale]);
+          interactiveCtx.strokeRect(-halfW, -halfH, metrics.boxW, metrics.boxH);
+          interactiveCtx.setLineDash([]);
+
+          const rotHandleDist = 28 * invScale;
+          interactiveCtx.beginPath();
+          interactiveCtx.moveTo(0, -halfH);
+          interactiveCtx.lineTo(0, -halfH - rotHandleDist);
+          interactiveCtx.strokeStyle = '#0ea5e9';
+          interactiveCtx.lineWidth = 2 * invScale;
+          interactiveCtx.stroke();
+
+          interactiveCtx.beginPath();
+          interactiveCtx.arc(0, -halfH - rotHandleDist, 8 * invScale, 0, Math.PI * 2);
+          interactiveCtx.fillStyle = '#0ea5e9';
+          interactiveCtx.fill();
+          interactiveCtx.strokeStyle = '#ffffff';
+          interactiveCtx.lineWidth = 2 * invScale;
+          interactiveCtx.stroke();
+
+          interactiveCtx.beginPath();
+          interactiveCtx.arc(halfW, halfH, 8 * invScale, 0, Math.PI * 2);
+          interactiveCtx.fillStyle = '#9333ea';
+          interactiveCtx.fill();
+          interactiveCtx.strokeStyle = '#ffffff';
+          interactiveCtx.lineWidth = 2 * invScale;
+          interactiveCtx.stroke();
+
+          interactiveCtx.restore();
+        }
+      }
+
+      interactiveCtx.restore();
+    }
+
+    function getTextLayerBox(layer) {
+      interactiveCtx.save();
+      interactiveCtx.font = `800 ${layer.fontSize}px ${layer.fontFamily}`;
+      const m = interactiveCtx.measureText(layer.text || ' ');
+      interactiveCtx.restore();
+      return {
+        boxW: Math.max(40, m.width + 36),
+        boxH: Math.max(30, layer.fontSize * 1.35)
+      };
+    }
+
+    // ==================== ZOOM IN / ZOOM OUT & PAN ====================
+    window.zoomPreview = (delta) => {
+      state.zoom = Math.max(0.3, Math.min(5.0, +(state.zoom + delta).toFixed(2)));
+      document.getElementById('zoomPercentLabel').textContent = `${Math.round(state.zoom * 100)}%`;
+      scheduleViewportRender();
+    };
+
+    window.resetZoomPan = () => {
+      state.zoom = 1;
+      state.panX = 0;
+      state.panY = 0;
+      document.getElementById('zoomPercentLabel').textContent = '100%';
+      scheduleViewportRender();
+    };
+
+    previewContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      zoomPreview(delta);
+    }, { passive: false });
+
+    window.addEventListener('resize', () => scheduleViewportRender());
+
+    // ==================== XEM LẠI ẢNH GỐC ====================
+    window.toggleOriginalPreviewClick = () => {
+      state.showingOriginal = !state.showingOriginal;
+      const btn = document.getElementById('compareBtn');
+      const txt = document.getElementById('compareBtnText');
+
+      if (state.showingOriginal) {
+        btn.className = 'px-3 py-1.5 rounded-full text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 transition cursor-pointer flex items-center gap-1.5 shadow-sm';
+        txt.textContent = 'Đang xem gốc';
+        originalModeBanner.classList.remove('hidden');
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer flex items-center gap-1.5 border border-slate-200';
+        txt.textContent = 'Ảnh gốc';
+        originalModeBanner.classList.add('hidden');
+      }
+      scheduleViewportRender();
+    };
+
+    // ==================== TƯƠNG TÁC CHUỘT TRÊN CANVAS ====================
+    function screenToWorkCoords(e, item) {
+      const rect = interactiveCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const sx = clientX - rect.left;
+      const sy = clientY - rect.top;
+      const { totalScale, offsetX, offsetY } = getViewportTransform(item);
+      return {
+        workX: (sx - offsetX) / totalScale,
+        workY: (sy - offsetY) / totalScale,
+        clientX,
+        clientY,
+        totalScale
+      };
+    }
+
+    interactiveCanvas.addEventListener('mousedown', onPointerDown);
+    interactiveCanvas.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    interactiveCanvas.addEventListener('mouseleave', () => brushCursor.classList.add('hidden'));
+
+    function onPointerDown(e) {
+      const item = state.items[state.selectedIndex];
+      if (!item || item.status !== 'done') return;
+
+      if (state.showingOriginal) toggleOriginalPreviewClick();
+
+      const pos = screenToWorkCoords(e, item);
+
+      if (state.isSpacePressed) {
+        state.isPanning = true;
+        interactiveCanvas.style.cursor = 'grabbing';
+        state.panStart = { x: pos.clientX - state.panX, y: pos.clientY - state.panY };
+        return;
+      }
+
+      if (state.currentMode === 'text' || state.brushTool === 'none') {
+        const hit = hitTestLayers(item, pos.workX, pos.workY, pos.totalScale);
+        if (hit) {
+          item.selectedLayerId = hit.layer.id;
+          syncTextControlsWithSelected(item);
+          renderLayerList();
+
+          if (hit.handle === 'rotate') {
+            state.isRotatingText = true;
+          } else if (hit.handle === 'resize') {
+            state.isResizingText = true;
+          } else {
+            state.isDraggingLayer = true;
+            state.dragStartOffset = { x: pos.workX - hit.layer.x, y: pos.workY - hit.layer.y };
+          }
+          scheduleViewportRender();
+          return;
+        }
+      }
+
+      if (state.currentMode === 'cutout' && (state.brushTool === 'erase' || state.brushTool === 'restore')) {
+        state.isPaintingMask = true;
+        const imgLayer = item.layers.find(l => l.type === 'image');
+        const imgLeft = imgLayer ? imgLayer.x - item.width / 2 : item.pad;
+        const imgTop = imgLayer ? imgLayer.y - item.height / 2 : item.pad;
+        const maskPt = { x: pos.workX - imgLeft, y: pos.workY - imgTop };
+        state.lastBrushPos = maskPt;
+        paintMaskStroke(item, maskPt, maskPt);
+        rebuildCutoutFromMask(item);
+        rebuildDisplayComposite(item, true);
+        return;
+      }
+
+      state.isPanning = true;
+      state.panStart = { x: pos.clientX - state.panX, y: pos.clientY - state.panY };
+    }
+
+    function onPointerMove(e) {
+      const item = state.items[state.selectedIndex];
+      if (!item || item.status !== 'done') return;
+      const pos = screenToWorkCoords(e, item);
+
+      if (state.currentMode === 'cutout' && !state.isSpacePressed && (state.brushTool === 'erase' || state.brushTool === 'restore')) {
+        const radiusWork = getScaledBrushRadius(item);
+        const diameterScreen = Math.max(8, radiusWork * 2 * pos.totalScale);
+        brushCursor.style.width = `${diameterScreen}px`;
+        brushCursor.style.height = `${diameterScreen}px`;
+        brushCursor.style.left = `${pos.clientX}px`;
+        brushCursor.style.top = `${pos.clientY}px`;
+        brushCursor.style.borderColor = state.brushTool === 'erase' ? '#ef4444' : '#10b981';
+        brushCursor.classList.remove('hidden');
+      } else {
+        brushCursor.classList.add('hidden');
+      }
+
+      if (state.isPanning) {
+        state.panX = pos.clientX - state.panStart.x;
+        state.panY = pos.clientY - state.panStart.y;
+        scheduleViewportRender();
+        return;
+      }
+
+      if (state.isRotatingText && item.selectedLayerId) {
+        const layer = item.layers.find(t => t.id === item.selectedLayerId);
+        if (layer && layer.type === 'text') {
+          const angleRad = Math.atan2(pos.workY - layer.y, pos.workX - layer.x);
+          let angleDeg = Math.round((angleRad * 180) / Math.PI + 90);
+          if (angleDeg > 180) angleDeg -= 360;
+          layer.rotation = angleDeg;
+          textRotationSlider.value = angleDeg;
+          textRotationValue.textContent = `${angleDeg}°`;
+          rebuildDisplayComposite(item, true);
+        }
+        return;
+      }
+
+      if (state.isResizingText && item.selectedLayerId) {
+        const layer = item.layers.find(t => t.id === item.selectedLayerId);
+        if (layer && layer.type === 'text') {
+          const dist = Math.hypot(pos.workX - layer.x, pos.workY - layer.y);
+          layer.fontSize = Math.max(16, Math.min(320, Math.round(dist * 0.65)));
+          textSizeSlider.value = layer.fontSize;
+          textSizeValue.textContent = `${layer.fontSize}`;
+          rebuildDisplayComposite(item, true);
+        }
+        return;
+      }
+
+      if (state.isDraggingLayer && item.selectedLayerId) {
+        const layer = item.layers.find(t => t.id === item.selectedLayerId);
+        if (layer) {
+          layer.x = pos.workX - state.dragStartOffset.x;
+          layer.y = pos.workY - state.dragStartOffset.y;
+          rebuildDisplayComposite(item, true);
+        }
+        return;
+      }
+
+      if (state.isPaintingMask) {
+        const imgLayer = item.layers.find(l => l.type === 'image');
+        const imgLeft = imgLayer ? imgLayer.x - item.width / 2 : item.pad;
+        const imgTop = imgLayer ? imgLayer.y - item.height / 2 : item.pad;
+        const currMaskPt = { x: pos.workX - imgLeft, y: pos.workY - imgTop };
+        paintMaskStroke(item, state.lastBrushPos || currMaskPt, currMaskPt);
+        state.lastBrushPos = currMaskPt;
+        rebuildCutoutFromMask(item);
+        rebuildDisplayComposite(item, true);
+      }
+    }
+
+    function onPointerUp() {
+      const item = state.items[state.selectedIndex];
+      if (state.isPaintingMask && item) {
+        state.isPaintingMask = false;
+        state.lastBrushPos = null;
+        pushHistorySnapshot(item);
+        rebuildDisplayComposite(item, false);
+        renderThumbnails();
+      }
+      if (state.isDraggingLayer || state.isResizingText || state.isRotatingText) {
+        state.isDraggingLayer = false;
+        state.isResizingText = false;
+        state.isRotatingText = false;
+        if (item) {
+          pushHistorySnapshot(item);
+          rebuildDisplayComposite(item, false);
+          renderThumbnails();
+        }
+      }
+      if (state.isPanning) {
+        state.isPanning = false;
+        if (state.isSpacePressed) interactiveCanvas.style.cursor = 'grab';
+      }
+    }
+
+    function hitTestLayers(item, workX, workY, totalScale) {
+      if (!item.layers) return null;
+      const invScale = 1 / totalScale;
+
+      for (let i = item.layers.length - 1; i >= 0; i--) {
+        const layer = item.layers[i];
+        if (layer.visible === false) continue;
+
+        if (layer.type === 'text') {
+          const { boxW, boxH } = getTextLayerBox(layer);
+          const halfW = boxW / 2;
+          const halfH = boxH / 2;
+
+          const dx = workX - layer.x;
+          const dy = workY - layer.y;
+          const rad = -((layer.rotation || 0) * Math.PI) / 180;
+          const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+          const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+          const hitR = Math.max(14 * invScale, 12);
+
+          if (Math.hypot(localX - 0, localY - (-halfH - 28 * invScale)) <= hitR) {
+            return { layer, handle: 'rotate' };
+          }
+          if (Math.hypot(localX - halfW, localY - halfH) <= hitR) {
+            return { layer, handle: 'resize' };
+          }
+          if (localX >= -halfW && localX <= halfW && localY >= -halfH && localY <= halfH) {
+            return { layer, handle: 'move' };
+          }
+        }
+      }
+      return null;
+    }
+
+    // ==================== CỌ VÙNG CHỌN ====================
+    function getScaledBrushRadius(item) {
+      const baseRef = Math.max(item.width, item.height);
+      return Math.max(4, Math.round((state.brushSize / 700) * baseRef));
+    }
+
+    function paintMaskStroke(item, fromPos, toPos) {
+      const mctx = item.maskCanvas.getContext('2d');
+      const radius = getScaledBrushRadius(item);
+
+      mctx.save();
+      mctx.lineCap = 'round';
+      mctx.lineJoin = 'round';
+      mctx.lineWidth = radius * 2;
+
+      if (state.brushTool === 'erase') {
+        mctx.globalCompositeOperation = 'destination-out';
+        mctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        mctx.globalCompositeOperation = 'source-over';
+        mctx.strokeStyle = 'rgba(255,255,255,1)';
+      }
+
+      mctx.beginPath();
+      mctx.moveTo(fromPos.x, fromPos.y);
+      mctx.lineTo(toPos.x, toPos.y);
+      mctx.stroke();
+      mctx.restore();
+    }
+
+    window.setBrushTool = (tool) => {
+      state.brushTool = tool;
+      const noneBtn = document.getElementById('brushNoneBtn');
+      const eraseBtn = document.getElementById('brushEraseBtn');
+      const restoreBtn = document.getElementById('brushRestoreBtn');
+
+      const activeClass = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer bg-white text-slate-900 shadow-sm ring-1 ring-slate-200 flex items-center gap-1.5';
+      const inactiveClass = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+
+      noneBtn.className = tool === 'none' ? activeClass : inactiveClass;
+      eraseBtn.className = tool === 'erase' ? activeClass : inactiveClass;
+      restoreBtn.className = tool === 'restore' ? activeClass : inactiveClass;
+
+      interactiveCanvas.style.cursor = tool === 'none' ? 'grab' : 'crosshair';
+    };
+
+    window.updateBrushSizeLabel = () => {
+      state.brushSize = parseInt(document.getElementById('brushSizeSlider').value, 10) || 40;
+      document.getElementById('brushSizeValue').textContent = `${state.brushSize}px`;
+    };
+
+    window.resetMaskToAI = () => {
+      const item = state.items[state.selectedIndex];
+      if (!item || !item.aiAlphaMask) return;
+      initItemMaskCanvas(item, item.aiAlphaMask);
+      rebuildDisplayComposite(item, false);
+      renderThumbnails();
+      showToast('Đã đặt lại vùng chọn AI ban đầu!');
+    };
+
+    // ==================== THIẾT KẾ CHỮ & LAYER ====================
+    window.addNewTextLayer = () => {
+      const item = state.items[state.selectedIndex];
+      if (!item || item.status !== 'done') return;
+
+      const textCount = item.layers.filter(l => l.type === 'text').length;
+      const defaultFontSize = Math.max(36, Math.round(Math.max(item.width, item.height) * 0.09));
+      const offsetStep = textCount * Math.round(defaultFontSize * 0.55);
+
+      const newLayer = {
+        id: `txt_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+        type: 'text',
+        text: textContentInput.value.trim() || `STICKER ${textCount + 1}`,
+        x: item.workW / 2,
+        y: Math.min(item.workH - defaultFontSize, item.pad + item.height * 0.78 + offsetStep),
+        fontSize: defaultFontSize,
+        fontFamily: textFontSelect.value,
+        color: textColorPicker.value || '#e11d48',
+        strokeColor: textStrokeColorPicker.value || '#1e293b',
+        strokeWidth: parseInt(textStrokeWidthSlider.value, 10) || 4,
+        rotation: 0,
+        visible: true
+      };
+
+      item.layers.push(newLayer);
+      item.selectedLayerId = newLayer.id;
+      syncTextControlsWithSelected(item);
+
+      if (!item.stickerEnabled) {
+        item.stickerEnabled = true;
+        stickerEnabledCheckbox.checked = true;
+      }
+
+      pushHistorySnapshot(item);
+      toggleLayerPanel(true);
+      rebuildDisplayComposite(item, false);
+      renderThumbnails();
+      showToast('Đã thêm chữ mới!');
+    };
+
+    function syncTextControlsWithSelected(item) {
+      const layer = item.layers.find(t => t.id === item.selectedLayerId && t.type === 'text');
+      if (!layer) return;
+      textContentInput.value = layer.text;
+      textFontSelect.value = layer.fontFamily;
+      textSizeSlider.value = layer.fontSize;
+      textSizeValue.textContent = `${layer.fontSize}`;
+      textRotationSlider.value = layer.rotation || 0;
+      textRotationValue.textContent = `${layer.rotation || 0}°`;
+      textColorPicker.value = layer.color || '#e11d48';
+      textStrokeColorPicker.value = layer.strokeColor || '#1e293b';
+      textStrokeWidthSlider.value = layer.strokeWidth ?? 4;
+      textStrokeWidthValue.textContent = `${layer.strokeWidth ?? 4}px`;
+    }
+
+    window.onTextControlLiveInput = () => {
+      const item = state.items[state.selectedIndex];
+      if (!item) return;
+      let layer = item.layers.find(t => t.id === item.selectedLayerId && t.type === 'text');
+      if (!layer && textContentInput.value.trim() !== '') {
+        addNewTextLayer();
+        return;
+      }
+      if (!layer) return;
+
+      layer.text = textContentInput.value || ' ';
+      layer.fontFamily = textFontSelect.value;
+      layer.fontSize = parseInt(textSizeSlider.value, 10) || 72;
+      layer.rotation = parseInt(textRotationSlider.value, 10) || 0;
+      layer.color = textColorPicker.value;
+      layer.strokeColor = textStrokeColorPicker.value;
+      layer.strokeWidth = parseInt(textStrokeWidthSlider.value, 10) || 0;
+
+      textSizeValue.textContent = `${layer.fontSize}`;
+      textRotationValue.textContent = `${layer.rotation}°`;
+      textStrokeWidthValue.textContent = `${layer.strokeWidth}px`;
+
+      rebuildDisplayComposite(item, true);
+      renderLayerList();
+    };
+
+    window.onTextControlCommit = () => {
+      onTextControlLiveInput();
+      const item = state.items[state.selectedIndex];
+      if (item) {
+        pushHistorySnapshot(item);
+        rebuildDisplayComposite(item, false);
+        renderThumbnails();
+      }
+    };
+
+    window.resetTextRotation = () => {
+      textRotationSlider.value = 0;
+      onTextControlCommit();
+    };
+
+    function renderLayerList() {
+      const item = state.items[state.selectedIndex];
+      if (!item) return;
+      layerListContainer.innerHTML = '';
+
+      for (let i = item.layers.length - 1; i >= 0; i--) {
+        const layer = item.layers[i];
+        const isSelected = layer.id === item.selectedLayerId;
+        const isImage = layer.type === 'image';
+
+        const row = document.createElement('div');
+        row.className = `p-2.5 rounded-xl border text-xs flex items-center justify-between gap-1.5 cursor-pointer transition ${
+          isSelected
+            ? 'bg-purple-50 border-purple-400 text-purple-950 font-semibold shadow-sm'
+            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+        }`;
+
+        row.onclick = () => {
+          item.selectedLayerId = layer.id;
+          if (layer.type === 'text') syncTextControlsWithSelected(item);
+          renderLayerList();
+          scheduleViewportRender();
+        };
+
+        const left = document.createElement('div');
+        left.className = 'flex items-center gap-2 truncate';
+
+        if (isImage) {
+          const thumb = document.createElement('img');
+          thumb.src = item.originalUrl;
+          thumb.className = 'w-6 h-6 rounded object-cover border border-slate-300 shrink-0';
+          left.appendChild(thumb);
+          const title = document.createElement('span');
+          title.className = 'truncate font-semibold text-blue-700';
+          title.textContent = 'Hình ảnh tách nền';
+          left.appendChild(title);
+        } else {
+          const colorDot = document.createElement('span');
+          colorDot.className = 'w-3.5 h-3.5 rounded-full shrink-0 border border-slate-300';
+          colorDot.style.backgroundColor = layer.color;
+          const title = document.createElement('span');
+          title.className = 'truncate max-w-[100px]';
+          title.textContent = `T: "${layer.text || ''}"`;
+          left.appendChild(colorDot);
+          left.appendChild(title);
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-0.5 shrink-0';
+
+        const upBtn = document.createElement('button');
+        upBtn.className = `px-1.5 py-0.5 rounded text-xs font-bold ${i === item.layers.length - 1 ? 'text-slate-300 cursor-not-allowed' : 'hover:bg-slate-200 text-slate-700'}`;
+        upBtn.title = 'Đưa lên trên';
+        upBtn.innerHTML = '↑';
+        upBtn.onclick = (e) => {
+          e.stopPropagation();
+          moveLayerOrder(i, 1);
+        };
+
+        const downBtn = document.createElement('button');
+        downBtn.className = `px-1.5 py-0.5 rounded text-xs font-bold ${i === 0 ? 'text-slate-300 cursor-not-allowed' : 'hover:bg-slate-200 text-slate-700'}`;
+        downBtn.title = 'Đưa xuống dưới';
+        downBtn.innerHTML = '↓';
+        downBtn.onclick = (e) => {
+          e.stopPropagation();
+          moveLayerOrder(i, -1);
+        };
+
+        const visBtn = document.createElement('button');
+        visBtn.className = 'p-1 hover:bg-slate-200 rounded text-slate-600';
+        visBtn.title = layer.visible === false ? 'Hiện Layer' : 'Ẩn Layer';
+        visBtn.innerHTML = layer.visible === false ? '🚫' : '👁';
+        visBtn.onclick = (e) => {
+          e.stopPropagation();
+          layer.visible = layer.visible === false ? true : false;
+          pushHistorySnapshot(item);
+          rebuildDisplayComposite(item, false);
+          renderLayerList();
+        };
+
+        actions.appendChild(upBtn);
+        actions.appendChild(downBtn);
+        actions.appendChild(visBtn);
+
+        if (!isImage) {
+          const delBtn = document.createElement('button');
+          delBtn.className = 'p-1 hover:bg-red-100 rounded text-red-500 hover:text-red-700 font-bold';
+          delBtn.title = 'Xóa Layer chữ';
+          delBtn.innerHTML = '×';
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            item.layers.splice(i, 1);
+            if (item.selectedLayerId === layer.id) {
+              const nextTxt = item.layers.find(l => l.type === 'text');
+              item.selectedLayerId = nextTxt ? nextTxt.id : 'layer_main_image';
+              if (nextTxt) syncTextControlsWithSelected(item);
+            }
+            pushHistorySnapshot(item);
+            rebuildDisplayComposite(item, false);
+            renderLayerList();
+            renderThumbnails();
+          };
+          actions.appendChild(delBtn);
+        }
+
+        row.appendChild(left);
+        row.appendChild(actions);
+        layerListContainer.appendChild(row);
+      }
+    }
+
+    function moveLayerOrder(index, dir) {
+      const item = state.items[state.selectedIndex];
+      if (!item) return;
+      const target = index + dir;
+      if (target < 0 || target >= item.layers.length) return;
+      const temp = item.layers[index];
+      item.layers[index] = item.layers[target];
+      item.layers[target] = temp;
+      pushHistorySnapshot(item);
+      rebuildDisplayComposite(item, false);
+      renderLayerList();
+      renderThumbnails();
+    }
+
+    // ==================== CHUYỂN ĐỔI TAB ====================
+    window.setMode = (mode) => {
+      state.currentMode = mode;
+
+      if (mode === 'cutout' && state.brushTool === 'none') {
+        setBrushTool('erase');
+      }
+
+      const tabs = {
+        cutout: document.getElementById('tabCutoutBtn'),
+        text: document.getElementById('tabTextBtn'),
+        sticker: document.getElementById('tabStickerBtn'),
+        vector: document.getElementById('tabVectorBtn')
+      };
+
+      const activeTabClass = 'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer bg-blue-50 text-blue-700 border border-blue-200';
+      const inactiveTabClass = 'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition cursor-pointer text-slate-600 hover:bg-slate-50 border border-transparent';
+
+      Object.keys(tabs).forEach(k => {
+        if (tabs[k]) tabs[k].className = k === mode ? activeTabClass : inactiveTabClass;
+      });
+
+      cutoutControlBar.classList.toggle('hidden', mode !== 'cutout');
+      textControlBar.classList.toggle('hidden', mode !== 'text');
+      stickerControlBar.classList.toggle('hidden', mode !== 'sticker');
+      vectorControlBar.classList.toggle('hidden', mode !== 'vector');
+
+      if (mode === 'text') {
+        toggleLayerPanel(true);
+      }
+
+      const current = state.items[state.selectedIndex];
+      if (!current) return;
+
+      if (mode === 'sticker' && !current.stickerEnabled) {
+        current.stickerEnabled = true;
+        stickerEnabledCheckbox.checked = true;
+        rebuildDisplayComposite(current, false);
+        renderThumbnails();
+        showToast('Đã bật viền Sticker mịn liền mạch!');
+      } else if (mode === 'vector') {
+        // Tab Vector dựa trên viền trắng đã tạo từ chức năng "Tạo Sticker"
+        if (!current.stickerEnabled) {
+          current.stickerEnabled = true;
+          stickerEnabledCheckbox.checked = true;
+        }
+        current.vectorEnabled = true;
+        rebuildDisplayComposite(current, false);
+        renderThumbnails();
+        showToast('Đã tạo đường Vector bám sát theo viền trắng Sticker!');
+      } else {
+        rebuildDisplayComposite(current, false);
+      }
+    };
+
+    // ==================== CÀI ĐẶT TAB VECTOR ====================
+    window.onVectorSettingChange = (fastMode = false) => {
+      const smooth = parseInt(vectorSmoothSlider.value, 10) || 10;
+      const offset = parseInt(vectorOffsetSlider.value, 10) || 0;
+
+      state.vectorConfig.smooth = smooth;
+      state.vectorConfig.offset = offset;
+
+      vectorSmoothValue.textContent = `${smooth}`;
+      vectorOffsetValue.textContent = `${offset > 0 ? '+' : ''}${offset}px`;
+
+      const current = state.items[state.selectedIndex];
+      if (!current) return;
+
+      if (!current.stickerEnabled) {
+        current.stickerEnabled = true;
+        stickerEnabledCheckbox.checked = true;
+      }
+      current.vectorEnabled = true;
+      rebuildDisplayComposite(current, fastMode);
+    };
+
+    window.setVectorColor = (color) => {
+      state.vectorConfig.color = color;
+      if (vectorColorPicker) vectorColorPicker.value = color;
+
+      const current = state.items[state.selectedIndex];
+      if (current) {
+        current.vectorEnabled = true;
+        scheduleViewportRender();
+      }
+      showToast(`Đã đổi màu đường Vector sang ${color.toUpperCase()}!`);
+    };
+
+    window.reDetectVectorPath = () => {
+      const current = state.items[state.selectedIndex];
+      if (!current || current.status !== 'done') {
+        showToast('Vui lòng đợi ảnh tách nền xong trước khi nhận diện Vector!');
+        return;
+      }
+      if (!current.stickerEnabled) {
+        current.stickerEnabled = true;
+        stickerEnabledCheckbox.checked = true;
+      }
+      current.vectorEnabled = true;
+      rebuildDisplayComposite(current, false);
+      renderThumbnails();
+      showToast('🔄 Đã nhận diện lại đường Vector theo viền trắng Sticker!');
+    };
+
+    // ==================== CÀI ĐẶT STICKER ====================
+    window.onStickerSliderLive = () => {
+      const current = state.items[state.selectedIndex];
+      if (!current) return;
+      current.strokeWidth = parseInt(strokeWidthSlider.value, 10) || 24;
+      strokeWidthValue.textContent = `${current.strokeWidth}px`;
+      rebuildDisplayComposite(current, true);
+    };
+
+    window.onStickerSettingCommit = () => {
+      const current = state.items[state.selectedIndex];
+      if (!current) return;
+
+      current.stickerEnabled = stickerEnabledCheckbox.checked;
+      current.strokeWidth = parseInt(strokeWidthSlider.value, 10) || 24;
+      current.shadowEnabled = stickerShadowCheckbox.checked;
+      strokeWidthValue.textContent = `${current.strokeWidth}px`;
+
+      state.globalSticker.enabled = current.stickerEnabled;
+      state.globalSticker.strokeWidth = current.strokeWidth;
+      state.globalSticker.shadowEnabled = current.shadowEnabled;
+
+      rebuildDisplayComposite(current, false);
+      renderThumbnails();
+    };
+
+    window.setStrokeColor = (color) => {
+      strokeColorPicker.value = color;
+      const current = state.items[state.selectedIndex];
+      if (!current) return;
+      current.strokeColor = color;
+      current.stickerEnabled = true;
+      stickerEnabledCheckbox.checked = true;
+      state.globalSticker.strokeColor = color;
+
+      rebuildDisplayComposite(current, false);
+      renderThumbnails();
+    };
+
+    window.applyStickerSettingsToAll = () => {
+      const enabled = stickerEnabledCheckbox.checked;
+      const strokeWidth = parseInt(strokeWidthSlider.value, 10) || 24;
+      const strokeColor = strokeColorPicker.value || '#ffffff';
+      const shadowEnabled = stickerShadowCheckbox.checked;
+
+      state.globalSticker = { enabled, strokeWidth, strokeColor, shadowEnabled };
+
+      for (const item of state.items) {
+        item.stickerEnabled = enabled;
+        item.strokeWidth = strokeWidth;
+        item.strokeColor = strokeColor;
+        item.shadowEnabled = shadowEnabled;
+        if (item.status === 'done') rebuildDisplayComposite(item, false);
+      }
+      renderThumbnails();
+      showToast(`Đã áp dụng Sticker cho tất cả ${state.items.length} ảnh!`);
+    };
+
+    // ==================== XUẤT FILE .SVG ĐƠN LẺ VÀ HÀNG LOẠT ====================
+    function buildSmoothSvgPathData(points) {
+      if (!points || points.length < 3) return '';
+      const n = points.length;
+      const startMidX = ((points[n - 1].x + points[0].x) * 0.5).toFixed(2);
+      const startMidY = ((points[n - 1].y + points[0].y) * 0.5).toFixed(2);
+      let d = `M ${startMidX} ${startMidY} `;
+      for (let i = 0; i < n; i++) {
+        const pCurr = points[i];
+        const pNext = points[(i + 1) % n];
+        const midX = ((pCurr.x + pNext.x) * 0.5).toFixed(2);
+        const midY = ((pCurr.y + pNext.y) * 0.5).toFixed(2);
+        d += `Q ${pCurr.x.toFixed(2)} ${pCurr.y.toFixed(2)} ${midX} ${midY} `;
+      }
+      return d + 'Z';
+    }
+
+    function generateSVGContent(item) {
+      const w = item.workW;
+      const h = item.workH;
+      const pngBase64 = item.displayCanvas.toDataURL('image/png');
+      const vecColor = state.vectorConfig.color || '#e11d48';
+
+      if (!item.vectorPaths || item.vectorPaths.length === 0) {
+        rebuildDisplayComposite(item, false);
+      }
+
+      const pathElements = (item.vectorPaths || [])
+        .map((loop, idx) => {
+          const d = buildSmoothSvgPathData(loop);
+          return d
+            ? `    <path id="CutContour_${idx + 1}" d="${d}" fill="none" stroke="${vecColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />`
+            : '';
+        })
+        .filter(Boolean)
+        .join('\n');
+
+      return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}px" height="${h}px" viewBox="0 0 ${w} ${h}">
+  <g id="Sticker_Artwork">
+    <image width="${w}" height="${h}" xlink:href="${pngBase64}" />
+  </g>
+  <g id="CutContour_Vector">
+${pathElements}
+  </g>
+</svg>`;
+    }
+
+    window.exportCurrentSVG = () => {
+      const current = state.items[state.selectedIndex];
+      if (!current || current.status !== 'done') return;
+      const svgContent = generateSVGContent(current);
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      triggerBrowserDownload(url, `${current.name}_sticker.svg`);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      showToast(`Đã xuất file ${current.name}_sticker.svg kèm đường Vector!`);
+    };
+
+    window.exportCurrentVectorAI = () => {
+      window.exportCurrentSVG();
+    };
+
+    // XUẤT FILE SVG HÀNG LOẠT (.ZIP)
+    window.downloadAllSVGsAsZip = async () => {
+      const doneItems = state.items.filter(i => i.status === 'done');
+      if (doneItems.length === 0) {
+        showToast('Chưa có ảnh nào xử lý xong để xuất SVG!');
+        return;
+      }
+
+      showToast(`Đang đóng gói ${doneItems.length} file .SVG vào file ZIP...`);
+      const zip = new window.JSZip();
+      doneItems.forEach((item, i) => {
+        const svgContent = generateSVGContent(item);
+        zip.file(`${i + 1}_${item.name}.svg`, svgContent);
+      });
+      const content = await zip.generateAsync({ type: 'blob' });
+      const zipUrl = URL.createObjectURL(content);
+      triggerBrowserDownload(zipUrl, `CitiStudio_Batch_SVG_${Date.now()}.zip`);
+      setTimeout(() => URL.revokeObjectURL(zipUrl), 10000);
+      showToast(`Đã tải xuống hàng loạt ${doneItems.length} file .SVG (.ZIP)!`);
+    };
+
+    // XUẤT TỪNG FILE SVG RỜI HÀNG LOẠT
+    window.downloadAllIndividualSVGs = () => {
+      const doneItems = state.items.filter(i => i.status === 'done');
+      if (doneItems.length === 0) {
+        showToast('Chưa có ảnh nào xử lý xong để xuất SVG!');
+        return;
+      }
+      doneItems.forEach((item, idx) => {
+        setTimeout(() => {
+          const svgContent = generateSVGContent(item);
+          const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          triggerBrowserDownload(url, `${item.name}.svg`);
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }, idx * 300);
+      });
+      showToast(`Đang tải lần lượt ${doneItems.length} file .SVG về máy...`);
+    };
+
+    // ==================== QUẢN LÝ DANH SÁCH THUMBNAIL & TẢI XUỐNG ====================
+    window.selectItem = (index) => {
+      if (index < 0 || index >= state.items.length) return;
+      state.selectedIndex = index;
+      const item = state.items[index];
+
+      resetZoomPan();
+
+      stickerEnabledCheckbox.checked = item.stickerEnabled;
+      strokeWidthSlider.value = item.strokeWidth;
+      strokeWidthValue.textContent = `${item.strokeWidth}px`;
+      strokeColorPicker.value = item.strokeColor;
+      stickerShadowCheckbox.checked = item.shadowEnabled;
+
+      syncTextControlsWithSelected(item);
+      renderLayerList();
+      updateMainViewIfSelected(item);
+      renderThumbnails();
+    };
+
+    function updateMainViewIfSelected(item) {
+      const current = state.items[state.selectedIndex];
+      if (!current || current.id !== item.id) return;
+
+      imageNameLabel.textContent = `${item.name}.png`;
+      imageDimLabel.textContent = `${item.width} × ${item.height} px (Gốc)`;
+      document.getElementById('currentImgResolutionText').textContent = `${item.width} × ${item.height} px • PNG Không nền`;
+
+      if (item.status === 'queued' || item.status === 'processing') {
+        processingOverlay.classList.remove('hidden');
+      } else {
+        processingOverlay.classList.add('hidden');
+        scheduleViewportRender();
+      }
+    }
+
+    function renderThumbnails() {
+      thumbnailList.innerHTML = '';
+      state.items.forEach((item, idx) => {
+        const isSelected = idx === state.selectedIndex;
+        const wrapper = document.createElement('div');
+        wrapper.className = `relative w-12 h-12 rounded-xl checkerboard shrink-0 cursor-pointer transition-all overflow-hidden border-2 group ${
+          isSelected ? 'border-blue-600 ring-2 ring-blue-500/30 scale-105' : 'border-slate-200 hover:border-slate-400'
+        }`;
+        wrapper.onclick = () => selectItem(idx);
+
+        const img = document.createElement('img');
+        img.src = item.thumbUrl || item.originalUrl;
+        img.className = 'w-full h-full object-contain';
+        wrapper.appendChild(img);
+
+        if (item.status === 'queued' || item.status === 'processing') {
+          const loader = document.createElement('div');
+          loader.className = 'absolute inset-0 bg-white/75 flex items-center justify-center';
+          loader.innerHTML = `<div class="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>`;
+          wrapper.appendChild(loader);
+        }
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'opacity-0 group-hover:opacity-100 absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-slate-900/70 text-white flex items-center justify-center text-[10px] transition hover:bg-red-600';
+        delBtn.innerHTML = '×';
+        delBtn.onclick = (e) => { e.stopPropagation(); removeItem(idx); };
+        wrapper.appendChild(delBtn);
+
+        thumbnailList.appendChild(wrapper);
+      });
+    }
+
+    function removeItem(index) {
+      state.items.splice(index, 1);
+      if (state.items.length === 0) {
+        state.selectedIndex = -1;
+        uploadScreen.classList.remove('hidden');
+        editorScreen.classList.add('hidden');
+        headerNewUploadBtn.classList.add('hidden');
+        return;
+      }
+      if (state.selectedIndex >= state.items.length) state.selectedIndex = state.items.length - 1;
+      selectItem(state.selectedIndex);
+      renderThumbnails();
+      updateBatchSummary();
+    }
+
+    function updateBatchSummary() {
+      const total = state.items.length;
+      const doneCount = state.items.filter(i => i.status === 'done').length;
+      const processingCount = state.items.filter(i => i.status === 'processing' || i.status === 'queued').length;
+      document.getElementById('batchCountBadgeZip').textContent = `${doneCount}/${total} ảnh`;
+
+      if (processingCount > 0) {
+        batchSummaryText.innerHTML = `<span class="text-blue-600 font-semibold">Đang tự động tách nền:</span> Hoàn tất ${doneCount}/${total} hình ảnh...`;
+      } else {
+        batchSummaryText.innerHTML = `Citi Studio • Đã sẵn sàng <strong class="text-emerald-600">${doneCount}/${total}</strong> hình ảnh`;
+      }
+    }
+
+    window.toggleBgPopover = () => bgPreviewBar.classList.toggle('hidden');
+    window.setCanvasBg = (bg) => {
+      if (bg === 'checkerboard') {
+        previewContainer.classList.add('checkerboard');
+        previewContainer.style.backgroundColor = '';
+      } else {
+        previewContainer.classList.remove('checkerboard');
+        previewContainer.style.backgroundColor = bg;
+      }
+    };
+
+    window.toggleDownloadMenu = (e) => {
+      e.stopPropagation();
+      document.getElementById('downloadMenu').classList.toggle('hidden');
+    };
+    window.hideDownloadMenu = () => document.getElementById('downloadMenu').classList.add('hidden');
+    window.addEventListener('click', () => hideDownloadMenu());
+
+    window.downloadCurrentImage = async () => {
+      const current = state.items[state.selectedIndex];
+      if (!current || current.status !== 'done') return;
+
+      showToast('Đang kết xuất ảnh PNG độ phân giải gốc...');
+      const fullCanvas = await renderFullResolutionExportCanvas(current);
+      const blob = await new Promise(res => fullCanvas.toBlob(res, 'image/png', 1.0));
+      const url = URL.createObjectURL(blob);
+      const suffix = current.stickerEnabled ? '_sticker.png' : '_nobg.png';
+      triggerBrowserDownload(url, `${current.name}${suffix}`);
+      setTimeout(() => URL.revokeObjectURL(url), 8000);
+      showToast(`Đã tải xuống ${current.name}${suffix} (Chất lượng gốc)!`);
+    };
+
+    window.downloadAllAsZip = async () => {
+      const doneItems = state.items.filter(i => i.status === 'done');
+      if (doneItems.length === 0) return;
+
+      showToast(`Đang kết xuất trọn bộ ${doneItems.length} ảnh (.PNG)...`);
+      const zip = new window.JSZip();
+      for (let i = 0; i < doneItems.length; i++) {
+        const item = doneItems[i];
+        const fullCanvas = await renderFullResolutionExportCanvas(item);
+        const blob = await new Promise(res => fullCanvas.toBlob(res, 'image/png', 1.0));
+        const suffix = item.stickerEnabled ? '_sticker.png' : '_nobg.png';
+        zip.file(`${i + 1}_${item.name}${suffix}`, blob);
+      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      const zipUrl = URL.createObjectURL(content);
+      triggerBrowserDownload(zipUrl, `CitiStudio_PNG_${Date.now()}.zip`);
+      setTimeout(() => URL.revokeObjectURL(zipUrl), 10000);
+      showToast(`Đã tải xuống trọn bộ ${doneItems.length} ảnh (.PNG)!`);
+    };
+
+    function triggerBrowserDownload(url, filename) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    let toastTimeout = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotice');
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
